@@ -1,6 +1,7 @@
 <!doctype html>
 <html>
 	<head>
+		<title>Piktogram!</title>
 		<link rel="stylesheet" type="text/css" href="css/pageStyles.css">
 	</head>
 	<body>
@@ -18,7 +19,7 @@
 					<div id="new-chart-data-form">
 						<table class="width80p" id="new-chart-data-table">
 							<tr>
-								<td class="width25p">Pictogram Name</td><td><input type="text" class="common-text-input width350" data-binding="value, pictogramName"></td>
+								<td class="width25p">Pictogram Name</td><td><input type="text" id="pictogram-name-input" class="common-text-input width350" ></td>
 							</tr>
 							<tr>
 								<td rowspan="2">
@@ -48,7 +49,6 @@
 					</div>
 				</div>
 				
-				<div data-binding="text, pictogramName"></div>
 			</div>			
 			<div id="charts-container">
 				

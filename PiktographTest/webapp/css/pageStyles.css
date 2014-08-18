@@ -1,11 +1,12 @@
 .hide {display: none !important;}
-.popup {position:absolute; width:800px;padding:10px;margin:auto;margin-top:50px;
+.popup {position:fixed; width:800px;padding:10px;margin:auto;margin-top:50px;
 	border-radius:5px;min-height:200px;background:#fff;z-index:1100}
 .width80p {width:80%}
 .width25p {width:25%}
 .width350 {width: 350px;}
 .width20 {width:20px}
 .common-text-input {font-size:12px;border:1px solid #dedede;border-radius:2px;padding:3px;}
+.error-input {border-color: red;}
 
 body {padding:0;margin:0;font-family: Arial, sans-serif;background:#dedede}
 #main-container {width:1000px;margin:auto;background:#fff;border:1px solid #aaa;padding:10px;border-top:none}
@@ -18,6 +19,6 @@ body {padding:0;margin:0;font-family: Arial, sans-serif;background:#dedede}
 #popup-data-title {font-weight: bold; text-align: center;margin-bottom:20px;}
 #new-chart-popup {max-height:500px;overflow-y:auto; font-weight:bold; padding:10px 50px;}
 #new-chart-data-poup-actions {margin-top:20px;text-align: center;}
-	#ncd-close {background: rgba(255, 0, 0, 0.5);}
-	#ncd-complete { background: rgba(0, 255, 0, 0.5)}
+	#ncd-close {background: rgba(255, 0, 0, 0.3);}
+	#ncd-complete { background: rgba(0, 255, 0, 0.3)}
 #popup-overlay {position:fixed;z-index:1000;top:0px;left:0px;width:100%;height:100%;background:#888;opacity:0.7}
