@@ -1,6 +1,7 @@
 var GlobalElements = {
 	overlay: document.getElementById("popup-overlay"),
 	newChartPopup: document.getElementById("new-chart-popup"),
+	pictogramsContainer: document.getElementById("charts-container"),
 	blankChartPopupHTML: document.getElementById("new-chart-popup").innerHTML
 };
 

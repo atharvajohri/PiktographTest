@@ -1,7 +1,7 @@
 //document.getElementById("myBtn").addEventListener("click", displayDate);
 
 
-var g_pictogramList;
+var g_pictogramList = [];
 
 var setupPictogram = function(){
 	setupPictogramEvents();
@@ -63,7 +63,58 @@ var getPictogramDataFromEditor = function(){
 	
 	if (validatePictogramModel(pictogramModel)){
 		g_pictogramList.push(pictogramModel);
+		refreshPictogramViews();
+		Utils.closeCreatePictogramPopup();
 	}
+};
+
+var refreshPictogramViews = function(){
+	for (var i = 0; i < g_pictogramList.length; i++){
+		setupPictogramView(g_pictogramList[i]);
+	}
+};
+
+var setupPictogramView = function(c_pictogram){
+	var existingPictogramElement = document.getElementById("pictogram-"+c_pictogram.pictogramName);
+	
+	//remove existing pictogram
+	if (existingPictogramElement){
+		existingPictogramElement.parentNode.removeChild(existingPictogramElement);	
+	}
+	
+	//setup new pictogram
+	existingPictogramElement = document.createElement("div");
+	existingPictogramElement.className = "cc-pictogram-container";
+	existingPictogramElement.setAttribute("id", "pictogram-" + c_pictogram.pictogramName);
+	
+	//populate pictogram with data
+	var pictogramNameElement = document.createElement("div");
+	pictogramNameElement.className = "cc-pictogram-name";
+	pictogramNameElement.innerHTML = c_pictogram.pictogramName;
+	existingPictogramElement.appendChild(pictogramNameElement);
+	
+	//populate pictogram data rows
+	var pictogramDataTable = document.createElement("table");
+	pictogramDataTable.className = "cc-pictogram-data-table";
+	pictogramDataTable.setAttribute("border", "1");
+	for (var i=0;i<c_pictogram.pictogramDataRows.length;i++){
+		var c_dataRow = c_pictogram.pictogramDataRows[i];
+		var currentDataRow = document.createElement("tr");
+		
+		var dataRowCellForName = document.createElement("td");
+		dataRowCellForName.innerHTML = c_dataRow.pictogramDataName;
+		currentDataRow.appendChild(dataRowCellForName);
+		
+		var dataRowCellForValue = document.createElement("td");
+		dataRowCellForValue.innerHTML = c_dataRow.pictogramDataValue;
+		currentDataRow.appendChild(dataRowCellForValue);
+		
+		pictogramDataTable.appendChild(currentDataRow);
+	}
+	
+	existingPictogramElement.appendChild(pictogramDataTable);
+	
+	GlobalElements.pictogramsContainer.appendChild(existingPictogramElement);
 };
 
 var validatePictogramModel = function(pictogramModel){
