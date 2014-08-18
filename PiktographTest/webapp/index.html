@@ -1,0 +1,67 @@
+<!doctype html>
+<html>
+	<head>
+		<link rel="stylesheet" type="text/css" href="css/pageStyles.css">
+	</head>
+	<body>
+		<div id="main-container">
+			<div id="title-container">
+				Atharva's Pictogram Creator
+			</div>
+			
+			<div id="popup-data-container">
+				<div id="new-chart-popup" class="hide popup">
+		<!-- 			New chart form starts here -->
+					<div id="popup-data-title">
+						Pictogram Editor: <span id="pictogram-data-container-type">Create New Pictogram</span>
+					</div>
+					<div id="new-chart-data-form">
+						<table class="width80p" id="new-chart-data-table">
+							<tr>
+								<td class="width25p">Pictogram Name</td><td><input type="text" class="common-text-input width350" data-binding="value, pictogramName"></td>
+							</tr>
+							<tr>
+								<td rowspan="2">
+									<div class="menu-button" id="add-pictogram-data-btn">
+										Add Pictogram Data
+									</div>
+								</td>
+							</tr>
+						</table>
+						<table class="width80p" id="new-chart-data">
+												
+						</table>
+					</div>
+					<div id="new-chart-data-poup-actions">
+						<div class="menu-button" id="ncd-close">
+							Cancel
+						</div>
+						<div class="menu-button" id="ncd-complete">
+							Complete
+						</div>
+					</div>
+				</div>
+				
+				<div id="menu-container">
+					<div class="menu-button" id="add-pictogram-btn">
+						+ Add a Pictogram
+					</div>
+				</div>
+				
+				<div data-binding="text, pictogramName"></div>
+			</div>			
+			<div id="charts-container">
+				
+			</div>
+			
+			
+		</div>
+		
+		<div id="popup-overlay" class="hide"></div>
+		
+		
+		<script type="text/javascript" src="js/utils.js"></script>
+		<script type="text/javascript" src="js/pictogramModel.js"></script>
+		<script type="text/javascript" src="js/pictogramController.js"></script>
+	</body>
+</html>
