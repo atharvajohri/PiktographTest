@@ -26,4 +26,7 @@ body {padding:0;margin:0;font-family: Arial, sans-serif;background:#dedede}
 .cc-pictogram-container {padding:10px;border-top:1px solid #dedede;margin-top:20px;}
 .cc-pictogram-name {font-size:14px; font-weight:bold;}
 .cc-pictogram-data-table {font-size:12px;border-collapse: collapse;border-color:#eee; margin:15px 0px}
-.cc-pictogram-data-table td {padding:5px;}
+.cc-pictogram-data-table td, .cc-key-container td {padding:5px;vertical-align: middle;}
+.cc-data-icon {display:inline-block;margin:0px 10px;background:#555;width:20px;height:20px;border-radius:20px;}
+
+.cc-key-container {display:inline-block;}

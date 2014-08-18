@@ -2,6 +2,7 @@
 
 
 var g_pictogramList = [];
+var MAX_ICON_COUNT = 10;
 
 var setupPictogram = function(){
 	setupPictogramEvents();
@@ -62,10 +63,36 @@ var getPictogramDataFromEditor = function(){
 	}
 	
 	if (validatePictogramModel(pictogramModel)){
-		g_pictogramList.push(pictogramModel);
+		g_pictogramList.push(recalculateDataValuesForPictogram(pictogramModel));
 		refreshPictogramViews();
 		Utils.closeCreatePictogramPopup();
 	}
+};
+
+/*10 20 30 40 50 20 30 34
+50 - 10 pieces
+1 - 10/50 pieces*/
+
+
+
+var recalculateDataValuesForPictogram = function(pictogramModel){
+	//first find max value for pictogram data
+	var maxValue = 0;
+	
+	for (var i =0;i<pictogramModel.pictogramDataRows.length;i++){
+		if (pictogramModel.pictogramDataRows[i].pictogramDataValue > maxValue){
+			maxValue = Number(pictogramModel.pictogramDataRows[i].pictogramDataValue);
+		}
+	}
+	
+	var iconRatio = MAX_ICON_COUNT/maxValue;
+	pictogramModel.iconRatio = Number(iconRatio).toFixed(3);
+	//for each data row, calculate icon count
+	for (var i =0;i<pictogramModel.pictogramDataRows.length;i++){
+		pictogramModel.pictogramDataRows[i].iconCount = Math.floor(pictogramModel.pictogramDataRows[i].pictogramDataValue * iconRatio);
+	}
+	
+	return pictogramModel;
 };
 
 var refreshPictogramViews = function(){
@@ -106,13 +133,40 @@ var setupPictogramView = function(c_pictogram){
 		currentDataRow.appendChild(dataRowCellForName);
 		
 		var dataRowCellForValue = document.createElement("td");
-		dataRowCellForValue.innerHTML = c_dataRow.pictogramDataValue;
+		
+		for (var k = 0; k < c_dataRow.iconCount; k++){
+			var dataIcon = document.createElement("div");
+			dataIcon.className = "cc-data-icon";
+			dataRowCellForValue.appendChild(dataIcon);
+		}
 		currentDataRow.appendChild(dataRowCellForValue);
 		
 		pictogramDataTable.appendChild(currentDataRow);
 	}
 	
 	existingPictogramElement.appendChild(pictogramDataTable);
+	
+	var keyElement = document.createElement("table");
+	keyElement.className = "cc-key-container";
+	
+	var keyElementRow = document.createElement("tr");
+	
+	var keyElementRowIconCell = document.createElement("td");
+	var dataIcon = document.createElement("div");
+	dataIcon.className = "cc-data-icon";
+	keyElementRowIconCell.appendChild(dataIcon);
+	
+	keyElementRow.appendChild(keyElementRowIconCell);
+	
+	var keyElementRowValueCell = document.createElement("td");
+	keyElementRowValueCell.innerHTML = c_pictogram.iconRatio;
+	
+	keyElementRow.appendChild(keyElementRowValueCell);
+	
+	keyElement.appendChild(keyElementRow);
+	
+	existingPictogramElement.appendChild(keyElement);
+	
 	
 	GlobalElements.pictogramsContainer.appendChild(existingPictogramElement);
 };
@@ -171,7 +225,7 @@ var addBlankPictogramDataRow = function(){
 	tableRowElement.className = 'pictogram-data-input-row';
 	tableRowElement.setAttribute("data-row-id", dataRowId);
 	
-	var newPictogramDataRowHTML = "<td>Data Name: <input type='text' class='common-text-input pictogram-data-name'></input></td>";
+	var newPictogramDataRowHTML = "<td>Data Name: <input type='text' maxlength='50' class='common-text-input pictogram-data-name'></input></td>";
 	newPictogramDataRowHTML += "<td>Data Value: <input type='text' class='common-text-input width20 pictogram-data-value' maxlength='2'></input></td>";
 	
 	tableRowElement.innerHTML = newPictogramDataRowHTML;
