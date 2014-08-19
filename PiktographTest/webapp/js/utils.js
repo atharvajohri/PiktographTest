@@ -1,8 +1,10 @@
 var GlobalElements = {
-	overlay: document.getElementById("popup-overlay"),
-	newChartPopup: document.getElementById("new-chart-popup"),
-	pictogramsContainer: document.getElementById("charts-container"),
-	blankChartPopupHTML: document.getElementById("new-chart-popup").innerHTML
+	overlay : document.getElementById("popup-overlay"),
+	newChartPopup : document.getElementById("new-chart-popup"),
+	pictogramsContainer : document.getElementById("charts-container"),
+	blankChartPopupHTML : document.getElementById("new-chart-popup").innerHTML,
+	defaultPictogramIconUrl : "http://icons.iconarchive.com/icons/yellowicon/game-stars/256/Mario-icon.png",
+	sharePictogramsButton : document.getElementById("share-pictogram-btn") 
 };
 
 var dataBindingAttributeName = "data-binding";
@@ -24,7 +26,7 @@ Utils.removeClass = function(element, className){
 Utils.hasClass = function(element, className){
 	var assignedClasses = element.getAttribute("class");
 	var hasClass = false;
-	if (assignedClasses.indexOf(className) > 0){
+	if (assignedClasses && assignedClasses.indexOf(className) > -1){
 		hasClass = true;
 	}
 	
@@ -59,21 +61,9 @@ Utils.repositionContainer = function(container, heightAlso){
 	}
 };
 
-Utils.openCreatePictogramPopup = function(popupTitle){
-	document.getElementById("pictogram-data-container-type").innerText = popupTitle || "Create New Pictogram";
-	Utils.repositionContainer(GlobalElements.newChartPopup, false);
-	Utils.showOverlay();
-	Utils.removeClass(GlobalElements.newChartPopup, "hide");
-};
-
-Utils.closeCreatePictogramPopup = function(){
-	Utils.hideOverlay();
-	Utils.addClass(GlobalElements.newChartPopup, "hide");
-};
-
 Utils.getAllElementsInsideContainer = function (container, matcherForPossibleElements){
 	var possibleElements = [];
-	if (container.childElementCount > 0){
+	if (container.childElementCount > 0 && container.tagName !== "SELECT"){
 		for (var i =0; i<container.childElementCount;i++){
 			possibleElements = possibleElements.concat(Utils.getAllElementsInsideContainer(container.children[i], matcherForPossibleElements));
 		}
@@ -122,6 +112,41 @@ Utils.getTriggerAndPropertyFromDataBindingAttribute = function(dataBindingAttrib
 
 Utils.getRandomId = function(customScale){
 	return Math.floor(Math.random()* (customScale || 99999));
+};
+
+Utils.isHexColor = function (inputString){
+	return /(^#[0-9A-F]{6}$)|(^#[0-9A-F]{3}$)/i.test('#'+inputString);
+};
+
+Utils.getDataIcon = function (dataRow){
+	var dataIcon = document.createElement("div");
+	
+	if (dataRow.pictogramIconType === "circle"){
+		dataIcon.className = "cc-data-icon cc-data-icon-circle";
+		dataIcon.style.background = "#" + dataRow.pictogramIconColor;
+	}else if (dataRow.pictogramIconType === "square"){
+		dataIcon.className = "cc-data-icon";
+		dataIcon.style.background = "#" + dataRow.pictogramIconColor;
+	}else{
+		dataIcon.className = "cc-data-icon";
+		dataIcon.style.background = "url('" + dataRow.pictogramIconURL + "')";
+		dataIcon.style["background-size"] = "contain";
+	}
+	
+	return dataIcon;
+};
+
+Utils.getAjaxRequestObject = function(){
+	var activexmodes=["Msxml2.XMLHTTP", "Microsoft.XMLHTTP"]; //activeX versions to check for in IE
+	if (window.ActiveXObject){ //Test for support for ActiveXObject in IE first (as XMLHttpRequest in IE7 is broken)
+		for (var i=0; i<activexmodes.length; i++){
+			return new ActiveXObject(activexmodes[i]);
+	  	}
+	}else if (window.XMLHttpRequest){ // if Mozilla, Safari etc
+		return new XMLHttpRequest();
+	}
+	
+	alert("Sorry! Your browser does not support ajax.");
 };
 
 BindingUtils.setupDataBindings = function(bindingsContainer, bindingsModel){

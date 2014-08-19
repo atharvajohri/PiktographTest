@@ -2,6 +2,8 @@
 .popup {position:fixed; width:800px;padding:10px;margin:auto;margin-top:50px;
 	border-radius:5px;min-height:200px;background:#fff;z-index:1100}
 .width80p {width:80%}
+.width90p {width:90%}
+.width100p {width:100%}
 .width25p {width:25%}
 .width350 {width: 350px;}
 .width20 {width:20px}
@@ -19,14 +21,19 @@ body {padding:0;margin:0;font-family: Arial, sans-serif;background:#dedede}
 #popup-data-title {font-weight: bold; text-align: center;margin-bottom:20px;}
 #new-chart-popup {max-height:500px;overflow-y:auto; font-weight:bold; padding:10px 50px;}
 #new-chart-data-poup-actions {margin-top:20px;text-align: center;}
-	#ncd-close {background: rgba(255, 0, 0, 0.3);}
+	#ncd-close, .red-btn {background: rgba(255, 0, 0, 0.3);}
+	.blue-btn {background: rgba(0, 0, 255, 0.3);}
 	#ncd-complete { background: rgba(0, 255, 0, 0.3)}
 #popup-overlay {position:fixed;z-index:1000;top:0px;left:0px;width:100%;height:100%;background:#888;opacity:0.7}
 
-.cc-pictogram-container {padding:10px;border-top:1px solid #dedede;margin-top:20px;}
-.cc-pictogram-name {font-size:14px; font-weight:bold;}
-.cc-pictogram-data-table {font-size:12px;border-collapse: collapse;border-color:#eee; margin:15px 0px}
-.cc-pictogram-data-table td, .cc-key-container td {padding:5px;vertical-align: middle;}
-.cc-data-icon {display:inline-block;margin:0px 10px;background:#555;width:20px;height:20px;border-radius:20px;}
+#pictogram-canvas-container {position:relative}
 
+.cc-pictogram-container {padding:10px;background:#f5f5f5;margin-top:20px;border-radius:5px;}
+.cc-pictogram-name {font-size:14px; font-weight:bold; display: inline-block;}
+.cc-pictogram-data-table {font-size:12px;border-collapse: collapse;border-color:#eee; margin:15px 0px; background:#fff}
+.cc-pictogram-data-table td, .cc-key-container td {padding:5px;vertical-align: middle;}
+.cc-data-icon {display:inline-block;margin:0px 10px;width:20px;height:20px;}
+	.cc-data-icon-circle {border-radius:20px;}
+.cc-pictogram-options-container {position:absolute;left:230px;}
+.cc-pictogram-options {margin-left:10px;}
 .cc-key-container {display:inline-block;}

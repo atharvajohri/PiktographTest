@@ -19,7 +19,7 @@
 					<div id="new-chart-data-form">
 						<table class="width80p" id="new-chart-data-table">
 							<tr>
-								<td class="width25p">Pictogram Name</td><td><input type="text" id="pictogram-name-input" maxlength='150' class="common-text-input width350" ></td>
+								<td class="width25p">Pictogram Name</td><td><input type="text" id="pictogram-name-input" maxlength='75' class="common-text-input width350" ></td>
 							</tr>
 							<tr>
 								<td rowspan="2">
@@ -29,7 +29,7 @@
 								</td>
 							</tr>
 						</table>
-						<table class="width80p" id="new-chart-data">
+						<table class="width100p" id="new-chart-data">
 												
 						</table>
 					</div>
@@ -47,19 +47,39 @@
 					<div class="menu-button" id="add-pictogram-btn">
 						+ Add a Pictogram
 					</div>
+					<div class="menu-button hide" id="share-pictogram-btn">
+						Share Pictograms on Twitter!
+					</div>
 				</div>
 				
 			</div>			
-			<div id="charts-container">
-				
+			<div id="pictogram-canvas-container">
+				<canvas id="charts-container" width="800" height="100">
+				</canvas>
 			</div>
 		</div>
 		
 		<div id="popup-overlay" class="hide"></div>
 		
-		
 		<script type="text/javascript" src="js/utils.js"></script>
 		<script type="text/javascript" src="js/pictogramModel.js"></script>
 		<script type="text/javascript" src="js/pictogramController.js"></script>
+		<!-- <script>
+	      window.fbAsyncInit = function() {
+	        FB.init({
+	          appId      : '672467819494839',
+	          xfbml      : true,
+	          version    : 'v2.0'
+	        });
+	      };
+	
+	      (function(d, s, id){
+	         var js, fjs = d.getElementsByTagName(s)[0];
+	         if (d.getElementById(id)) {return;}
+	         js = d.createElement(s); js.id = id;
+	         js.src = "https://connect.facebook.net/en_US/sdk.js";
+	         fjs.parentNode.insertBefore(js, fjs);
+	       }(document, 'script', 'facebook-jssdk'));
+	    </script> -->
 	</body>
 </html>
