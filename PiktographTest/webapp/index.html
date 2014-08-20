@@ -13,7 +13,7 @@
 			<div id="popup-data-container">
 				<div id="new-chart-popup" class="hide popup">
 		<!-- 			New chart form starts here -->
-					<div id="popup-data-title">
+					<div id="popup-data-title" class="popup-title">
 						Pictogram Editor: <span id="pictogram-data-container-type">Create New Pictogram</span>
 					</div>
 					<div id="new-chart-data-form">
@@ -38,9 +38,32 @@
 							Cancel
 						</div>
 						<div class="menu-button" id="ncd-complete">
-							Complete
+							Continue to <br> Position and Scaling
 						</div>
 					</div>
+				</div>
+				
+				<div id="chart-dimensions-popup" class="hide popup">
+					<div id="popup-data-title" class="popup-title">
+						Reposition &amp; Scale Pictogram
+					</div>
+					<div id="temp-pictogram-canvas-container">
+						<canvas id="temp-pictogram-canvas" width="600" height="100">
+						</canvas>
+					</div>
+				</div>
+				
+				<div id="cors-security-popup" class="hide popup center">
+					<b>ALERT!</b>
+					Your pictogram contains external images for icons.<br>
+					You cannot resize or scale your pictogram because of security issues related to<br>
+					<b>Cross-origin Resource Sharing</b>. This feature is therefore disabled for this pictogram.<br>
+					You can try this feature by creating a pictogram without any images for icons.
+					
+					<br><br>
+					<div class="menu-button" id="cors-okay-btn">
+						Got It!
+					</div> 
 				</div>
 				
 				<div id="menu-container">

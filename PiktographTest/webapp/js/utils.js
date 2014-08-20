@@ -2,9 +2,13 @@ var GlobalElements = {
 	overlay : document.getElementById("popup-overlay"),
 	newChartPopup : document.getElementById("new-chart-popup"),
 	pictogramsContainer : document.getElementById("charts-container"),
+	tempPictogramContainer : document.getElementById("temp-pictogram-canvas"),
 	blankChartPopupHTML : document.getElementById("new-chart-popup").innerHTML,
 	defaultPictogramIconUrl : "http://icons.iconarchive.com/icons/yellowicon/game-stars/256/Mario-icon.png",
-	sharePictogramsButton : document.getElementById("share-pictogram-btn") 
+	sharePictogramsButton : document.getElementById("share-pictogram-btn"),
+	chartDimensionsPopup : document.getElementById("chart-dimensions-popup"),
+	chartDimensionPopupHTML : document.getElementById("chart-dimensions-popup").innerHTML,
+	corsSecurityPopup: document.getElementById("cors-security-popup")
 };
 
 var dataBindingAttributeName = "data-binding";

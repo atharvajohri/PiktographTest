@@ -19,6 +19,12 @@ var setupPictogramEvents = function(){
 		openCreatePictogramPopup("Create New Pictogram");
 	});
 	
+	document.getElementById("cors-okay-btn").addEventListener("click", function(){
+		Utils.hideOverlay();
+		Utils.addClass(GlobalElements.corsSecurityPopup, "hide");
+		refreshPictogramViews();
+	});
+	
 	//Uploading image to FB / Twitter or Pinterest requires app to be hosted.
 	/*document.getElementById("share-pictogram-btn").addEventListener("click", function(){
 		
@@ -69,8 +75,66 @@ var setupPictogramDataEvents = function(){
 	});
 	
 	document.getElementById("ncd-complete").addEventListener("click", function(){
-		getPictogramDataFromEditor();
+		var currentPictogramModel = getPictogramDataFromEditor();
+		if (validatePictogramModel(currentPictogramModel)){
+			currentPictogramModel = recalculateDataValuesForPictogram(currentPictogramModel);
+			
+			var existingPictogramIndex = findPictogramIndexById(currentPictogramModel.pictogramId);
+			if (typeof existingPictogramIndex === "number"){
+				g_pictogramList[existingPictogramIndex] = currentPictogramModel;
+			}else{
+				g_pictogramList.push(currentPictogramModel);			
+			}
+			
+//			refreshPictogramViews();
+			closeCreatePictogramPopup();
+			openResizeAndScalePictogramPopup(currentPictogramModel);
+		}
 	});
+};
+
+var doesPictogramContainImages = function(pictogramModel){
+	var containsImages = false;
+	for (var i = 0; i < pictogramModel.pictogramDataRows.length; i++){
+		if (pictogramModel.pictogramDataRows[i].pictogramIconType === "icon"){
+			containsImages = true;
+			break;
+		}
+	}
+	
+	return containsImages;
+};
+
+var openResizeAndScalePictogramPopup = function(pictogramModel){
+	
+	if (doesPictogramContainImages(pictogramModel)){
+		Utils.repositionContainer(GlobalElements.corsSecurityPopup, false);
+		Utils.showOverlay();
+		Utils.removeClass(GlobalElements.corsSecurityPopup, "hide");
+	}else{
+		waitForImagesToLoad(function(){
+			
+			GlobalElements.chartDimensionsPopup.innerHTML = GlobalElements.chartDimensionPopupHTML;
+			GlobalElements.tempPictogramContainer = document.getElementById("temp-pictogram-canvas");
+			
+			Utils.repositionContainer(GlobalElements.chartDimensionsPopup, false);
+			Utils.showOverlay();
+			Utils.removeClass(GlobalElements.chartDimensionsPopup, "hide");
+			
+			updateCanvasDimensions(GlobalElements.tempPictogramContainer, [pictogramModel]);
+			setupPictogramViewOnCanvas(pictogramModel, GlobalElements.tempPictogramContainer, true);
+			
+			//convert pictogram drawn on canvas to image which can be resized & repositioned 
+			var dataURL = GlobalElements.tempPictogramContainer.toDataURL();
+			var pictogramImage = new Image();
+			pictogramImage.onload = function(){
+				var context = GlobalElements.tempPictogramContainer.getContext("2d");
+				context.clearRect(0, 0, GlobalElements.tempPictogramContainer.width, GlobalElements.tempPictogramContainer.height);
+				context.drawImage(pictogramImage, 0, 0); // Or at whatever offset you like
+			};
+			pictogramImage.src = dataURL;
+		});		
+	}
 };
 
 var getPictogramDataFromEditor = function(){
@@ -119,19 +183,7 @@ var getPictogramDataFromEditor = function(){
 		}));
 	}
 	
-	if (validatePictogramModel(pictogramModel)){
-		pictogramModel = recalculateDataValuesForPictogram(pictogramModel);
-		
-		var existingPictogramIndex = findPictogramIndexById(pictogramModel.pictogramId);
-		if (typeof existingPictogramIndex === "number"){
-			g_pictogramList[existingPictogramIndex] = pictogramModel;
-		}else{
-			g_pictogramList.push(pictogramModel);			
-		}
-		
-		refreshPictogramViews();
-		closeCreatePictogramPopup();
-	}
+	return pictogramModel;
 };
 
 /*10 20 30 40 50 20 30 34
@@ -162,14 +214,20 @@ var recalculateDataValuesForPictogram = function(pictogramModel){
 
 var g_currentLineHeight = 26;
 
-var updateCanvasDimensions = function(){
+var updateCanvasDimensions = function(pictogramContainer, pictogramList){
+	if (!pictogramContainer){
+		pictogramContainer = GlobalElements.pictogramsContainer;
+	}
+	if (!pictogramList){
+		pictogramList = g_pictogramList;
+	}
 	var totalHeight = 0;
 	g_currentLineHeight = 26;
-	for (var i = 0; i < g_pictogramList.length; i++){
-		totalHeight += (80 + g_pictogramList[i].pictogramDataRows.length * 45);
+	for (var i = 0; i < pictogramList.length; i++){
+		totalHeight += (80 + pictogramList[i].pictogramDataRows.length * 45);
 	}
 	
-	GlobalElements.pictogramsContainer.setAttribute("height", totalHeight);
+	pictogramContainer.setAttribute("height", totalHeight);
 };
 
 var refreshPictogramViews = function(){
@@ -185,7 +243,7 @@ var refreshPictogramViews = function(){
 		waitForImagesToLoad(function(){
 			for (var i = 0; i < g_pictogramList.length; i++){
 //				setupPictogramViewNonCanvas(g_pictogramList[i]);
-				setupPictogramViewCanvas(i);			
+				setupPictogramViewOnCanvas(i);			
 			}
 		});		
 	} else{
@@ -221,9 +279,11 @@ var waitForImagesToLoad = function(loadedCallback){
 	}
 };
 
-var setupPictogramViewCanvas = function(pictogramIndex){
-	var c_pictogram = g_pictogramList[pictogramIndex];
-	var context = document.getElementById("charts-container").getContext("2d");
+var setupPictogramViewOnCanvas = function(c_pictogram, canvasContainer, noEvents){
+	if (!canvasContainer){
+		canvasContainer = document.getElementById("charts-container");
+	}
+	var context = canvasContainer.getContext("2d");
 	
 	g_currentLineHeight += 20;
 	context.font = 'bold 14pt Calibri';
@@ -271,7 +331,9 @@ var setupPictogramViewCanvas = function(pictogramIndex){
 	
 	g_currentLineHeight += 30;
 	
-	setEventsForPictogramView(pictogramOptionsContainer);
+	if (!noEvents){
+		setEventsForPictogramView(pictogramOptionsContainer);		
+	}
 };
 
 var getPictogramOptionButtons = function(c_pictogram){
