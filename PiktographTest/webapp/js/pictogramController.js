@@ -1,10 +1,12 @@
-//document.getElementById("myBtn").addEventListener("click", displayDate);
+/*This is the controller file where all the Magic happens :)*/
 
 
-var g_pictogramList = [];
-var MAX_ICON_COUNT = 10;
+var g_pictogramList = []; //an array to store all the pictograms created
+var g_currentLineHeight = 26; //this is the starting height for drawing the pictogram on the canvas (think of it as offset for Y axis)
 
-var setupPictogram = function(){
+var MAX_ICON_COUNT = 10; //max icon count is the number of icons to represent the max value for a data row of a pictogram
+
+var setupPictogram = function(){ //initiator function
 	setupPictogramEvents();
 };
 
@@ -14,16 +16,17 @@ var setupPictogram = function(){
 	BindingUtils.setupDataBindings(document.getElementById("popup-data-container"), g_PictogramModel);
 };*/
 
+//sets up DOM events
 var setupPictogramEvents = function(){
-	document.getElementById("add-pictogram-btn").addEventListener("click", function(){
+	document.getElementById("add-pictogram-btn").addEventListener("click", function(){ //dom event to capture click on create pictogram button
 		openCreatePictogramPopup("Create New Pictogram");
 	});
 	
-	document.getElementById("cors-okay-btn").addEventListener("click", function(){
+	/*document.getElementById("cors-okay-btn").addEventListener("click", function(){
 		Utils.hideOverlay();
 		Utils.addClass(GlobalElements.corsSecurityPopup, "hide");
 		refreshPictogramViews();
-	});
+	});*/
 	
 	//Uploading image to FB / Twitter or Pinterest requires app to be hosted.
 	/*document.getElementById("share-pictogram-btn").addEventListener("click", function(){
@@ -36,7 +39,8 @@ var setupPictogramEvents = function(){
 	});*/
 };
 
-var openCreatePictogramPopup = function(popupTitle, pictogramIndexToEdit){
+//opens the pictogram editor/creator popup - accepts a title (Create or Edit existing)
+var openCreatePictogramPopup = function(popupTitle, pictogramIndexToEdit){ 
 	document.getElementById("pictogram-data-container-type").innerText = popupTitle || "Create New Pictogram";
 	Utils.repositionContainer(GlobalElements.newChartPopup, false);
 	Utils.showOverlay();
@@ -47,12 +51,13 @@ var openCreatePictogramPopup = function(popupTitle, pictogramIndexToEdit){
 	}
 };
 
+//if you open the pictogram editor to edit an existing pictogram, then this function prefills the editor with existing pictogram values
 var populateCreatePictogramPopupWithPictogramData = function(pictogramIndexToEdit){
-	var pictogramToPopulate = g_pictogramList[pictogramIndexToEdit];
+	var pictogramToPopulate = g_pictogramList[pictogramIndexToEdit]; //get the pictogram model to edit by the index
 	
 	document.getElementById("pictogram-name-input").value = pictogramToPopulate.pictogramName;
 	for (var i = 0; i< pictogramToPopulate.pictogramDataRows.length; i++){
-		addBlankPictogramDataRow(pictogramToPopulate.pictogramDataRows[i]);
+		addPictogramDataRow(pictogramToPopulate.pictogramDataRows[i]); //add each exiting pictogram data row
 	}
 	var pictogramToEditIdContainer = document.createElement("div");
 	pictogramToEditIdContainer.className = "hide pictogram-to-edit-id";
@@ -60,14 +65,17 @@ var populateCreatePictogramPopupWithPictogramData = function(pictogramIndexToEdi
 	GlobalElements.newChartPopup.appendChild(pictogramToEditIdContainer);
 };
 
+
+//closes the pictogram editor
 var closeCreatePictogramPopup = function(){
 	Utils.hideOverlay();
 	Utils.addClass(GlobalElements.newChartPopup, "hide");
 };
 
+//sets up events for elements inside the pictogram editor like closing, adding a data row and complete button
 var setupPictogramDataEvents = function(){
 	document.getElementById("add-pictogram-data-btn").addEventListener("click", function(){
-		addBlankPictogramDataRow();
+		addPictogramDataRow();
 	});
 	
 	document.getElementById("ncd-close").addEventListener("click", function(){
@@ -86,13 +94,14 @@ var setupPictogramDataEvents = function(){
 				g_pictogramList.push(currentPictogramModel);			
 			}
 			
-//			refreshPictogramViews();
+			refreshPictogramViews();
 			closeCreatePictogramPopup();
-			openResizeAndScalePictogramPopup(currentPictogramModel);
+//			openResizeAndScalePictogramPopup(currentPictogramModel);
 		}
 	});
 };
 
+//checks if the pictogram's data rows contain external images (used to check for CORS security issues)
 var doesPictogramContainImages = function(pictogramModel){
 	var containsImages = false;
 	for (var i = 0; i < pictogramModel.pictogramDataRows.length; i++){
@@ -105,7 +114,8 @@ var doesPictogramContainImages = function(pictogramModel){
 	return containsImages;
 };
 
-var openResizeAndScalePictogramPopup = function(pictogramModel){
+//following is basic logic for resize and scale - cannot proceed with this because of CORS
+/*var openResizeAndScalePictogramPopup = function(pictogramModel){
 	
 	if (doesPictogramContainImages(pictogramModel)){
 		Utils.repositionContainer(GlobalElements.corsSecurityPopup, false);
@@ -135,8 +145,11 @@ var openResizeAndScalePictogramPopup = function(pictogramModel){
 			pictogramImage.src = dataURL;
 		});		
 	}
-};
+};*/
 
+//when you click complete, this function is fired
+//basically, it retrieves data from the editor and populates the PictogramModel.
+//once we have a populated PictogramModel, it can be rendered on the canvas using setupPictogramViewOnCanvas (single pictogram) or refreshPictogramViews (all pictograms held in the g_pictogramList array)
 var getPictogramDataFromEditor = function(){
 	var pictogramModel = new PictogramModel(); //model to store pictogram data
 	
@@ -186,12 +199,7 @@ var getPictogramDataFromEditor = function(){
 	return pictogramModel;
 };
 
-/*10 20 30 40 50 20 30 34
-50 - 10 pieces
-1 - 10/50 pieces*/
-
-
-
+//calculates data values for icon ratio from the pictogram data rows
 var recalculateDataValuesForPictogram = function(pictogramModel){
 	//first find max value for pictogram data
 	var maxValue = 0;
@@ -212,8 +220,7 @@ var recalculateDataValuesForPictogram = function(pictogramModel){
 	return pictogramModel;
 };
 
-var g_currentLineHeight = 26;
-
+//decides the height of the canvas on which the pictograms need to be rendered
 var updateCanvasDimensions = function(pictogramContainer, pictogramList){
 	if (!pictogramContainer){
 		pictogramContainer = GlobalElements.pictogramsContainer;
@@ -230,27 +237,30 @@ var updateCanvasDimensions = function(pictogramContainer, pictogramList){
 	pictogramContainer.setAttribute("height", totalHeight);
 };
 
+//this function initiates the rendering of all canvases held in the g_pictogramList array
 var refreshPictogramViews = function(){
-	GlobalElements.pictogramsContainer.innerHTML = "";
+	GlobalElements.pictogramsContainer.innerHTML = ""; // refresh the container
 	var optionContainers = document.getElementById("pictogram-canvas-container").querySelectorAll(".cc-pictogram-options-container");
 	for (var i = 0; i < optionContainers.length; i++){
-		optionContainers[i].parentNode.removeChild(optionContainers[i]);
+		optionContainers[i].parentNode.removeChild(optionContainers[i]); //remove the pictogram options, ie, Delete & Edit 
 	}
 	updateCanvasDimensions();
 	
 	if (g_pictogramList.length > 0){
-		Utils.removeClass(GlobalElements.sharePictogramsButton, "hide");
+//		Utils.removeClass(GlobalElements.sharePictogramsButton, "hide");
 		waitForImagesToLoad(function(){
 			for (var i = 0; i < g_pictogramList.length; i++){
 //				setupPictogramViewNonCanvas(g_pictogramList[i]);
-				setupPictogramViewOnCanvas(i);			
+				setupPictogramViewOnCanvas(g_pictogramList[i]);			
 			}
 		});		
 	} else{
-		Utils.addClass(GlobalElements.sharePictogramsButton, "hide");
+//		Utils.addClass(GlobalElements.sharePictogramsButton, "hide");
 	}
 };
 
+//before a pictogram can be rendered on the canvas, we have to make sure that all images for it have been loaded
+//following function achieves this. it accepts a loadedCallback which is fired when all images are loaded
 var waitForImagesToLoad = function(loadedCallback){
 	var allImagesLoaded = true;
 	for (var i = 0; i<g_pictogramList.length; i++){
@@ -268,7 +278,7 @@ var waitForImagesToLoad = function(loadedCallback){
 		}
 	}
 	
-	if (!allImagesLoaded){
+	if (!allImagesLoaded){ //if images are not loaded, then wait for 200ms and check again
 		setTimeout(function(){
 			waitForImagesToLoad(loadedCallback);
 		}, 200);
@@ -279,26 +289,27 @@ var waitForImagesToLoad = function(loadedCallback){
 	}
 };
 
+//renders a single pictogram on the canvas
 var setupPictogramViewOnCanvas = function(c_pictogram, canvasContainer, noEvents){
 	if (!canvasContainer){
-		canvasContainer = document.getElementById("charts-container");
+		canvasContainer = document.getElementById("charts-container"); //take charts container to be default canvas
 	}
 	var context = canvasContainer.getContext("2d");
 	
-	g_currentLineHeight += 20;
+	g_currentLineHeight += 20; //give 20 px padding before starting new pictogram
 	context.font = 'bold 14pt Calibri';
 	context.fillStyle = "black";
-	context.fillText(c_pictogram.pictogramName, 10, g_currentLineHeight);
+	context.fillText(c_pictogram.pictogramName, 10, g_currentLineHeight); //render the title
 	c_pictogram.pictogramLineHeight = g_currentLineHeight;
 
-	var pictogramOptionsContainer = getPictogramOptionButtons(c_pictogram);
+	var pictogramOptionsContainer = getPictogramOptionButtons(c_pictogram); //render the option buttons, ie, Edit & Delete for the pictogram
 	pictogramOptionsContainer.className = "cc-pictogram-options-container";
 	pictogramOptionsContainer.style.top = (Number(g_currentLineHeight) - 20) + "px";
 	document.getElementById("pictogram-canvas-container").appendChild(pictogramOptionsContainer);
 	
 	g_currentLineHeight += 40;
 	
-	for (var k = 0; k < c_pictogram.pictogramDataRows.length; k++){
+	for (var k = 0; k < c_pictogram.pictogramDataRows.length; k++){ //render all the data rows.
 		var c_dataRow = c_pictogram.pictogramDataRows[k];
 		context.font = '12pt Calibri';
 		context.fillStyle = "black";
@@ -325,7 +336,7 @@ var setupPictogramViewOnCanvas = function(c_pictogram, canvasContainer, noEvents
 		g_currentLineHeight += 30;
 	}
 	
-	context.font = '12pt Calibri';
+	context.font = '12pt Calibri'; //render the unit value text
 	context.fillStyle = "black";
 	context.fillText("Unit Value: " + c_pictogram.iconRatio, 20, g_currentLineHeight);
 	
@@ -336,6 +347,8 @@ var setupPictogramViewOnCanvas = function(c_pictogram, canvasContainer, noEvents
 	}
 };
 
+//each rendered pictogram comes with two options - to delete the pictogram and to edit.
+//the following function generates the DOM elements and returns them to us
 var getPictogramOptionButtons = function(c_pictogram){
 	
 	var pictogramOptionsContainer = document.createElement("div"); 
@@ -358,7 +371,182 @@ var getPictogramOptionButtons = function(c_pictogram){
 	return pictogramOptionsContainer;
 };
 
+//event listeners for delete and edit button
+//could not implement share because application needs to be hosted
+var setEventsForPictogramView = function(pictogramViewElement){
+	var deleteButton = pictogramViewElement.querySelectorAll(".cc-pictogram-delete")[0];
+	var editButton = pictogramViewElement.querySelectorAll(".cc-pictogram-edit")[0];
+//	var shareButton = pictogramViewElement.querySelectorAll(".cc-pictogram-share")[0];
+	
+	deleteButton.addEventListener("click", function(){
+		var pictogramIndexToDelete = findPictogramIndexById(this.getAttribute("data-id"));
+		g_pictogramList.splice(pictogramIndexToDelete, 1);
+		refreshPictogramViews();
+	});
+	
+	editButton.addEventListener("click", function(){
+		var pictogramIndexToEdit = findPictogramIndexById(this.getAttribute("data-id"));
+		openCreatePictogramPopup("Edit Pictogram", pictogramIndexToEdit);
+	});
+};
 
+//search for a pictogram in g_pictogramList by it's id
+var findPictogramIndexById = function(pictogramId){
+	var foundPictogramIndex = null;
+	for (var i = 0; i< g_pictogramList.length; i++){
+		if (g_pictogramList[i].pictogramId.toString() === pictogramId.toString()){
+			foundPictogramIndex = i;
+			break;
+		}
+	}
+	
+	return foundPictogramIndex;
+};
+
+//validate a pictogram data model
+//basically checks if all values are correct
+var validatePictogramModel = function(pictogramModel){
+	var isValid = true;
+	var alertText = "";
+	
+	if (!pictogramModel.pictogramName){
+		Utils.errorHighlightTextBox(document.getElementById("pictogram-name-input"));
+		alertText = "Please give a valid name for the Pictogram.\n\n";
+		isValid = false;
+	}
+	
+	if (pictogramModel.pictogramDataRows.length === 0){
+		alertText += "Please provide at least one data row for the Pictogram!\n\n";
+		isValid = false;
+	}
+	var invalidPictogramValues = false, invalidPictogramNames = false, invalidHex = false;
+	for (var i=0; i< pictogramModel.pictogramDataRows.length; i++){
+		if (pictogramModel.pictogramDataRows[i].pictogramDataValue && isNaN(pictogramModel.pictogramDataRows[i].pictogramDataValue)){
+			Utils.errorHighlightTextBox(pictogramModel.pictogramDataRows[i].elementData.pictogramDataValueElement);
+			invalidPictogramValues = true;
+			isValid = false;
+		}
+		
+		if (!pictogramModel.pictogramDataRows[i].pictogramDataName){
+			Utils.errorHighlightTextBox(pictogramModel.pictogramDataRows[i].elementData.pictogramDataNameElement);
+			invalidPictogramNames = true;
+			isValid = false;
+		}
+		
+		if (pictogramModel.pictogramDataRows[i].pictogramIconType !== "icon" && !Utils.isHexColor(pictogramModel.pictogramDataRows[i].pictogramIconColor)){
+			Utils.errorHighlightTextBox(pictogramModel.pictogramDataRows[i].elementData.pictogramDataIconColorElement);
+			invalidHex = true;
+			isValid = false;
+		}
+	}
+	
+	if (invalidPictogramValues){
+		alertText += "Pictogram data values can only be numeric!\n\n";
+	}
+	if (invalidPictogramNames){
+		alertText += "Pictogram data names cannot be empty!\n\n";	
+	}
+	if (invalidHex){
+		alertText += "Pictogram data color is not a valid hex!";
+	}
+
+	if (!isValid){
+		alert(alertText);
+	}
+	return isValid;
+};
+
+//clear the pictogram editor popup, and resets the event listeners in it
+var refreshPictogramPopup = function(){
+	GlobalElements.newChartPopup.innerHTML = GlobalElements.blankChartPopupHTML;
+	setupPictogramDataEvents();
+};
+
+//add a pictogram data row in the pictogram editor.
+//accepts a parameter pictogramRowDataToPopulate, which populates the row with existing PictogramDataRow Model
+var addPictogramDataRow = function(pictogramRowDataToPopulate){
+	var dataRowId = Utils.getRandomId();
+	
+	var tableRowElement = document.createElement("tr");
+	tableRowElement.className = 'pictogram-data-input-row';
+	tableRowElement.setAttribute("data-row-id", dataRowId);
+	
+	//html for the new data row
+	var newPictogramDataRowHTML = "<td>Data Name: <input type='text' maxlength='20' class='common-text-input pictogram-data-name'></input></td>";
+	newPictogramDataRowHTML += "<td>Data Value: <input type='text' class='common-text-input width20 pictogram-data-value' maxlength='2'></input></td>";
+	newPictogramDataRowHTML += "<td>Data Icon: <select class='pictogram-data-icon-select'><option value='circle'>Circle</option><option value='square'>Square</option><option value='icon'>Custom Icon</option></select></td>";
+	newPictogramDataRowHTML += "<td class='hide pictogram-data-icon-url-cell'>Icon URL: <input type='text' maxlength='1000' value='"+GlobalElements.defaultPictogramIconUrl+"' class='common-text-input pictogram-data-icon-url'></input></td>";
+	newPictogramDataRowHTML += "<td class='pictogram-data-icon-color-cell'>Color: #<input type='text' maxlength='6' class='common-text-input pictogram-data-icon-color'></input></td>";
+	newPictogramDataRowHTML += "<td class='pictogram-data-delete-cell'><div class='menu-button pictogram-data-delete red-btn'>Delete</td>";
+	
+	tableRowElement.innerHTML = newPictogramDataRowHTML;
+	
+	document.getElementById("new-chart-data").appendChild(tableRowElement);
+	
+	setDataRowEvents(tableRowElement);
+	
+	if (pictogramRowDataToPopulate){
+		tableRowElement.querySelectorAll(".pictogram-data-name")[0].value = pictogramRowDataToPopulate.pictogramDataName;
+		tableRowElement.querySelectorAll(".pictogram-data-value")[0].value = pictogramRowDataToPopulate.pictogramDataValue;
+		
+		tableRowElement.querySelectorAll(".pictogram-data-icon-select")[0].value = pictogramRowDataToPopulate.pictogramIconType;
+		
+		//create an event for 'change' trigger & dispatch it
+		var event;
+		if (Utils.isBrowserIE()){
+			event = document.createEvent("HTMLEvents");
+			event.initEvent("change",true,false);
+		}else{
+			event = new Event("change");
+		}
+		tableRowElement.querySelector(".pictogram-data-icon-select").dispatchEvent(event);
+		
+		tableRowElement.querySelectorAll(".pictogram-data-icon-url")[0].value = pictogramRowDataToPopulate.pictogramIconURL;
+		tableRowElement.querySelectorAll(".pictogram-data-icon-color")[0].value = pictogramRowDataToPopulate.pictogramIconColor;
+	}
+	
+	GlobalElements.newChartPopup.scrollTop = 999999;
+};
+
+//sets event listeners for the delete button, and the "change" event of the icon type dropdown
+//if icon type is a circle or square, then you can set it's color
+//if icon type is an external image, then you can set it's URL
+var setDataRowEvents = function(tableRowElement){
+	var dataIconSelectElement = tableRowElement.querySelector(".pictogram-data-icon-select");
+	var dataDeleteButtonElement = tableRowElement.querySelector(".pictogram-data-delete");
+	
+	dataIconSelectElement.addEventListener("change", function(){
+		var value = this.value;
+		var tableRow = this.parentNode.parentNode;
+		
+		var dataIconURLCell = tableRow.querySelectorAll('.pictogram-data-icon-url-cell')[0];
+		var dataIconColorCell = tableRow.querySelectorAll('.pictogram-data-icon-color-cell')[0];
+		
+		if (value === "circle" || value === "square"){
+			Utils.addClass(dataIconURLCell, "hide");
+			Utils.removeClass(dataIconColorCell, "hide");
+		}else{
+			Utils.removeClass(dataIconURLCell, "hide");
+			Utils.addClass(dataIconColorCell, "hide");
+		}
+		
+	});
+	
+	dataDeleteButtonElement.addEventListener("click", function(){
+		var tableRow = this.parentNode.parentNode;
+		tableRow.parentNode.removeChild(tableRow);
+	});
+	
+	
+};
+
+//initiate the pictogram logic!
+setupPictogram();
+
+
+//DEPRECATED - following generates the pictogram if Canvas is not supported (but now am using the canvas approach)
+//basically creates everything using div & img tags 
+//this got deprecated because I wanted to build the resizing and scaling functionality - thus have to use canvas
 var setupPictogramViewNonCanvas = function(c_pictogram){
 	var existingPictogramElement = document.getElementById("pictogram-"+c_pictogram.pictogramName);
 	
@@ -447,153 +635,3 @@ var setupPictogramViewNonCanvas = function(c_pictogram){
 	
 	setEventsForPictogramView(existingPictogramElement);
 };
-
-var setEventsForPictogramView = function(pictogramViewElement){
-	var deleteButton = pictogramViewElement.querySelectorAll(".cc-pictogram-delete")[0];
-	var editButton = pictogramViewElement.querySelectorAll(".cc-pictogram-edit")[0];
-	var shareButton = pictogramViewElement.querySelectorAll(".cc-pictogram-share")[0];
-	
-	deleteButton.addEventListener("click", function(){
-		var pictogramIndexToDelete = findPictogramIndexById(this.getAttribute("data-id"));
-		g_pictogramList.splice(pictogramIndexToDelete, 1);
-		refreshPictogramViews();
-	});
-	
-	editButton.addEventListener("click", function(){
-		var pictogramIndexToEdit = findPictogramIndexById(this.getAttribute("data-id"));
-		openCreatePictogramPopup("Create New Pictogram", pictogramIndexToEdit);
-	});
-};
-
-var findPictogramIndexById = function(pictogramId){
-	var foundPictogramIndex = null;
-	for (var i = 0; i< g_pictogramList.length; i++){
-		if (g_pictogramList[i].pictogramId.toString() === pictogramId.toString()){
-			foundPictogramIndex = i;
-			break;
-		}
-	}
-	
-	return foundPictogramIndex;
-};
-
-var validatePictogramModel = function(pictogramModel){
-	var isValid = true;
-	var alertText = "";
-	
-	if (!pictogramModel.pictogramName){
-		Utils.errorHighlightTextBox(document.getElementById("pictogram-name-input"));
-		alertText = "Please give a valid name for the Pictogram.\n\n";
-		isValid = false;
-	}
-	
-	if (pictogramModel.pictogramDataRows.length === 0){
-		alertText += "Please provide at least one data row for the Pictogram!\n\n";
-		isValid = false;
-	}
-	var invalidPictogramValues = false, invalidPictogramNames = false, invalidHex = false;
-	for (var i=0; i< pictogramModel.pictogramDataRows.length; i++){
-		if (pictogramModel.pictogramDataRows[i].pictogramDataValue && isNaN(pictogramModel.pictogramDataRows[i].pictogramDataValue)){
-			Utils.errorHighlightTextBox(pictogramModel.pictogramDataRows[i].elementData.pictogramDataValueElement);
-			invalidPictogramValues = true;
-			isValid = false;
-		}
-		
-		if (!pictogramModel.pictogramDataRows[i].pictogramDataName){
-			Utils.errorHighlightTextBox(pictogramModel.pictogramDataRows[i].elementData.pictogramDataNameElement);
-			invalidPictogramNames = true;
-			isValid = false;
-		}
-		
-		if (pictogramModel.pictogramDataRows[i].pictogramIconType !== "icon" && !Utils.isHexColor(pictogramModel.pictogramDataRows[i].pictogramIconColor)){
-			Utils.errorHighlightTextBox(pictogramModel.pictogramDataRows[i].elementData.pictogramDataIconColorElement);
-			invalidHex = true;
-			isValid = false;
-		}
-	}
-	
-	if (invalidPictogramValues){
-		alertText += "Pictogram data values can only be numeric!\n\n";
-	}
-	if (invalidPictogramNames){
-		alertText += "Pictogram data names cannot be empty!\n\n";	
-	}
-	if (invalidHex){
-		alertText += "Pictogram data color is not a valid hex!";
-	}
-
-	if (!isValid){
-		alert(alertText);
-	}
-	return isValid;
-};
-
-var refreshPictogramPopup = function(){
-	GlobalElements.newChartPopup.innerHTML = GlobalElements.blankChartPopupHTML;
-	setupPictogramDataEvents();
-};
-
-var addBlankPictogramDataRow = function(pictogramRowDataToPopulate){
-	var dataRowId = Utils.getRandomId();
-	
-	var tableRowElement = document.createElement("tr");
-	tableRowElement.className = 'pictogram-data-input-row';
-	tableRowElement.setAttribute("data-row-id", dataRowId);
-	
-	var newPictogramDataRowHTML = "<td>Data Name: <input type='text' maxlength='20' class='common-text-input pictogram-data-name'></input></td>";
-	newPictogramDataRowHTML += "<td>Data Value: <input type='text' class='common-text-input width20 pictogram-data-value' maxlength='2'></input></td>";
-	newPictogramDataRowHTML += "<td>Data Icon: <select class='pictogram-data-icon-select'><option value='circle'>Circle</option><option value='square'>Square</option><option value='icon'>Custom Icon</option></select></td>";
-	newPictogramDataRowHTML += "<td class='hide pictogram-data-icon-url-cell'>Icon URL: <input type='text' maxlength='1000' value='"+GlobalElements.defaultPictogramIconUrl+"' class='common-text-input pictogram-data-icon-url'></input></td>";
-	newPictogramDataRowHTML += "<td class='pictogram-data-icon-color-cell'>Color: #<input type='text' maxlength='6' class='common-text-input pictogram-data-icon-color'></input></td>";
-	newPictogramDataRowHTML += "<td class='pictogram-data-delete-cell'><div class='menu-button pictogram-data-delete red-btn'>Delete</td>";
-	
-	tableRowElement.innerHTML = newPictogramDataRowHTML;
-	
-	document.getElementById("new-chart-data").appendChild(tableRowElement);
-	
-	setDataRowEvents(tableRowElement);
-	
-	if (pictogramRowDataToPopulate){
-		tableRowElement.querySelectorAll(".pictogram-data-name")[0].value = pictogramRowDataToPopulate.pictogramDataName;
-		tableRowElement.querySelectorAll(".pictogram-data-value")[0].value = pictogramRowDataToPopulate.pictogramDataValue;
-		
-		tableRowElement.querySelectorAll(".pictogram-data-icon-select")[0].value = pictogramRowDataToPopulate.pictogramIconType;
-		tableRowElement.querySelector(".pictogram-data-icon-select").dispatchEvent(new Event('change'));
-		
-		tableRowElement.querySelectorAll(".pictogram-data-icon-url")[0].value = pictogramRowDataToPopulate.pictogramIconURL;
-		tableRowElement.querySelectorAll(".pictogram-data-icon-color")[0].value = pictogramRowDataToPopulate.pictogramIconColor;
-	}
-	
-	GlobalElements.newChartPopup.scrollTop = 999999;
-};
-
-var setDataRowEvents = function(tableRowElement){
-	var dataIconSelectElement = tableRowElement.querySelector(".pictogram-data-icon-select");
-	var dataDeleteButtonElement = tableRowElement.querySelector(".pictogram-data-delete");
-	
-	dataIconSelectElement.addEventListener("change", function(){
-		var value = this.value;
-		var tableRow = this.parentNode.parentNode;
-		
-		var dataIconURLCell = tableRow.querySelectorAll('.pictogram-data-icon-url-cell')[0];
-		var dataIconColorCell = tableRow.querySelectorAll('.pictogram-data-icon-color-cell')[0];
-		
-		if (value === "circle" || value === "square"){
-			Utils.addClass(dataIconURLCell, "hide");
-			Utils.removeClass(dataIconColorCell, "hide");
-		}else{
-			Utils.removeClass(dataIconURLCell, "hide");
-			Utils.addClass(dataIconColorCell, "hide");
-		}
-		
-	});
-	
-	dataDeleteButtonElement.addEventListener("click", function(){
-		var tableRow = this.parentNode.parentNode;
-		tableRow.parentNode.removeChild(tableRow);
-	});
-	
-	
-};
-
-setupPictogram();
