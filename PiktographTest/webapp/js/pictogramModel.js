@@ -10,6 +10,8 @@ var PictogramModel = function(){
 	self.pictogramLineHeight = 0; //line height - used during positioning the pictogram & its data on the canvas
 	self.pictogramDataRows = []; //each pictogram holds some data stored as an array of PictogramDataRow models (see the next model)
 	self.iconRatio = 0; //this holds each unit value of the icon in the pictogram
+	
+	self.pictogramImageData; //this stores the pictogram image data  such as the data url, positions and dimensions for the pictogram rendered via the temporary canvas
 };
 
 //each data row stored in PictogramModel.pictogramDataRows
@@ -32,4 +34,21 @@ var PictogramDataRow = function(name, value, iconType, iconColor, iconURL, eleme
 	};
 	self.pictogramImageObject.src = self.pictogramIconURL;
 	
+};
+
+var PictogramImageData = function(imageDataURL, imageWidth, imageHeight, imageX, imageY){
+	var self = this;
+	
+	self.pictogramImageLoaded = false;
+	self.pictogramImage = new Image(); //the image object of the data row's icon which holds the external image 
+	self.pictogramImage.onload = function(){ //loaded callback for the data row's external icon url
+		self.pictogramImageLoaded = true;
+	};
+	self.pictogramImage.src = imageDataURL;
+	
+	self.imageWidth = imageWidth;
+	self.imageHeight = imageHeight;
+	
+	self.imageX = imageX;
+	self.imageY = imageY;
 };
