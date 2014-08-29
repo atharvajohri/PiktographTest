@@ -1,0 +1,112 @@
+<!doctype html>
+<html>
+	<head>
+		<title>Piktogram!</title>
+		<link rel="stylesheet" type="text/css" href="css/pageStyles.css">
+	</head>
+	<body>
+		<div id="main-container">
+			<div id="title-container">
+				Atharva's Pictogram Creator
+			</div>
+			
+			<div id="popup-data-container">
+				<div id="new-chart-popup" class="hide popup">
+		<!-- 			New chart form starts here -->
+					<div id="popup-data-title" class="popup-title">
+						Pictogram Editor
+					</div>
+					<div id="new-chart-data-form">
+						<table class="width80p" id="new-chart-data-table">
+							<tr>
+								<td class="width25p">Pictogram Name</td><td><input type="text" id="pictogram-name-input" maxlength='75' class="common-text-input width350" ></td>
+							</tr>
+							<tr>
+								<td rowspan="2">
+									<div class="menu-button" id="add-pictogram-data-btn">
+										Add Pictogram Data
+									</div>
+								</td>
+							</tr>
+						</table>
+						<table class="width100p" id="new-chart-data">
+												
+						</table>
+					</div>
+					<div id="new-chart-data-poup-actions">
+						<div class="menu-button" id="ncd-close">
+							Cancel
+						</div>
+						<!-- <div class="menu-button" id="ncd-complete">
+							Continue to <br> Position and Scaling
+						</div> -->
+						<div class="menu-button" id="ncd-complete">
+							Complete
+						</div>
+					</div>
+				</div>
+				
+				<div id="chart-dimensions-popup" class="hide popup">
+					<div id="popup-data-title" class="popup-title">
+						Reposition &amp; Scale Pictogram
+					</div>
+					<div id="temp-pictogram-canvas-container">
+						<canvas id="temp-pictogram-canvas" width="600" height="100">
+						</canvas>
+					</div>
+				</div>
+				
+				<!-- <div id="cors-security-popup" class="hide popup center">
+					<b>ALERT!</b>
+					Your pictogram contains external images for icons.<br>
+					You cannot resize or scale your pictogram because of security issues related to<br>
+					<b>Cross-origin Resource Sharing</b>. This feature is therefore disabled for this pictogram.<br>
+					You can try this feature by creating a pictogram without any images for icons.
+					
+					<br><br>
+					<div class="menu-button" id="cors-okay-btn">
+						Got It!
+					</div> 
+				</div> -->
+				
+				<div id="menu-container">
+					<div class="menu-button" id="add-pictogram-btn">
+						+ Add a Pictogram
+					</div>
+<!-- 					Cannot add sharing because app requires hosting -->
+					<!-- <div class="menu-button hide" id="share-pictogram-btn">
+						Share Pictograms on Twitter! 
+					</div> -->
+				</div>
+				
+			</div>			
+			<div id="pictogram-canvas-container">
+				<canvas id="charts-container" width="800" height="100">
+				</canvas>
+			</div>
+		</div>
+		
+		<div id="popup-overlay" class="hide"></div>
+		
+		<script type="text/javascript" src="js/utils.js"></script>
+		<script type="text/javascript" src="js/pictogramModel.js"></script>
+		<script type="text/javascript" src="js/pictogramController.js"></script>
+		<!-- <script>
+	      window.fbAsyncInit = function() {
+	        FB.init({
+	          appId      : '672467819494839',
+	          xfbml      : true,
+	          version    : 'v2.0'
+	        });
+	      };
+	
+	      (function(d, s, id){
+	         var js, fjs = d.getElementsByTagName(s)[0];
+	         if (d.getElementById(id)) {return;}
+	         js = d.createElement(s); js.id = id;
+	         js.src = "https://connect.facebook.net/en_US/sdk.js";
+	         fjs.parentNode.insertBefore(js, fjs);
+	       }(document, 'script', 'facebook-jssdk'));
+	    </script> -->
+	</body>
+</html>

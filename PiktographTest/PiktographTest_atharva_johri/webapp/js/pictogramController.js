@@ -3,7 +3,6 @@
 
 var g_pictogramList = []; //an array to store all the pictograms created
 var g_currentLineHeight = 26; //this is the starting height for drawing the pictogram on the canvas (think of it as offset for Y axis)
-var g_mouseStatus = {}; //this is an object containing the status of the mouse (whether it's clicked, or dragging, etc)
 
 var MAX_ICON_COUNT = 10; //max icon count is the number of icons to represent the max value for a data row of a pictogram
 
@@ -95,9 +94,9 @@ var setupPictogramDataEvents = function(){
 				g_pictogramList.push(currentPictogramModel);			
 			}
 			
-//			refreshPictogramViews();
+			refreshPictogramViews();
 			closeCreatePictogramPopup();
-			convertPictogramDataToImage(currentPictogramModel);
+//			openResizeAndScalePictogramPopup(currentPictogramModel);
 		}
 	});
 };
@@ -115,15 +114,15 @@ var doesPictogramContainImages = function(pictogramModel){
 	return containsImages;
 };
 
-//using a temporary canvas, we can convert the pictogram data to a pictogram data url which can be generated on the final canvas
-var convertPictogramDataToImage = function(pictogramModel){
+//following is basic logic for resize and scale - cannot proceed with this because of CORS
+/*var openResizeAndScalePictogramPopup = function(pictogramModel){
 	
 	if (doesPictogramContainImages(pictogramModel)){
 		Utils.repositionContainer(GlobalElements.corsSecurityPopup, false);
 		Utils.showOverlay();
 		Utils.removeClass(GlobalElements.corsSecurityPopup, "hide");
 	}else{
-//		waitForImagesToLoad(function(){
+		waitForImagesToLoad(function(){
 			
 			GlobalElements.chartDimensionsPopup.innerHTML = GlobalElements.chartDimensionPopupHTML;
 			GlobalElements.tempPictogramContainer = document.getElementById("temp-pictogram-canvas");
@@ -135,29 +134,18 @@ var convertPictogramDataToImage = function(pictogramModel){
 			updateCanvasDimensions(GlobalElements.tempPictogramContainer, [pictogramModel]);
 			setupPictogramViewOnCanvas(pictogramModel, GlobalElements.tempPictogramContainer, true);
 			
-			//add pictogram image data to be drawn on final canvas that can be resized and repositioned 
-			pictogramModel.pictogramImageData = new PictogramImageData(GlobalElements.tempPictogramContainer.toDataURL(), 600, GlobalElements.tempPictogramContainer.height, 40);
-			
-			//close the temporary canvas
-			Utils.hideOverlay();
-			Utils.addClass(GlobalElements.chartDimensionsPopup, "hide");
-			
-			drawPictogramsUsingImageData(g_pictogramList);
-//		});		
+			//convert pictogram drawn on canvas to image which can be resized & repositioned 
+			var dataURL = GlobalElements.tempPictogramContainer.toDataURL();
+			var pictogramImage = new Image();
+			pictogramImage.onload = function(){
+				var context = GlobalElements.tempPictogramContainer.getContext("2d");
+				context.clearRect(0, 0, GlobalElements.tempPictogramContainer.width, GlobalElements.tempPictogramContainer.height);
+				context.drawImage(pictogramImage, 0, 0); // Or at whatever offset you like
+			};
+			pictogramImage.src = dataURL;
+		});		
 	}
-};
-
-//draws Pictograms using image data generated from the temporary canvas
-var drawPictogramsUsingImageData = function(pictogramList){
-	waitForImagesToLoad(function(){
-		refreshCanvasScreen();
-		setupCanvasMouseInteractions();
-	});
-};
-
-var drawPictogramImageDataOnCanvas = function(canvasContext, pictogramImageData){
-	canvasContext.drawImage(pictogramImageData.pictogramImage, pictogramImageData.imageX, pictogramImageData.imageY, pictogramImageData.imageWidth, pictogramImageData.imageHeight); // Or at whatever offset you like
-};
+};*/
 
 //when you click complete, this function is fired
 //basically, it retrieves data from the editor and populates the PictogramModel.
@@ -233,51 +221,20 @@ var recalculateDataValuesForPictogram = function(pictogramModel){
 };
 
 //decides the height of the canvas on which the pictograms need to be rendered
-var updateCanvasDimensions = function(pictogramContainer, pictogramList, usingImageData){
+var updateCanvasDimensions = function(pictogramContainer, pictogramList){
 	if (!pictogramContainer){
 		pictogramContainer = GlobalElements.pictogramsContainer;
 	}
 	if (!pictogramList){
 		pictogramList = g_pictogramList;
 	}
-	
 	var totalHeight = 0;
 	g_currentLineHeight = 26;
-	if (!usingImageData){
-		for (var i = 0; i < pictogramList.length; i++){
-			totalHeight += (80 + pictogramList[i].pictogramDataRows.length * 45);
-		}
-		
-	}else{
-		//find max bottom (bottom = top + height)
-		var maxBottom = 0;
-		var currentImageY = 26;
-		
-		for (var i = 0; i < pictogramList.length; i++){
-			var c_pictogram = pictogramList[i];
-			if (c_pictogram && c_pictogram.pictogramImageData){
-				var c_pictogramImageData = c_pictogram.pictogramImageData;
-				
-				//set imageY if not currently exists
-				if (!c_pictogramImageData.imageY){
-					c_pictogramImageData.imageY = currentImageY;
-				}
-
-				currentImageY += Number(c_pictogramImageData.imageHeight) + 20;
-				
-				var c_imageBottom = (c_pictogramImageData.imageY + c_pictogramImageData.imageHeight + 20);
-				if (c_imageBottom > maxBottom){
-					maxBottom = c_imageBottom;
-				}
-				
-			}
-		}
-		
-		totalHeight = Number(maxBottom) + 50;
+	for (var i = 0; i < pictogramList.length; i++){
+		totalHeight += (80 + pictogramList[i].pictogramDataRows.length * 45);
 	}
 	
 	pictogramContainer.setAttribute("height", totalHeight);
-	
 };
 
 //this function initiates the rendering of all canvases held in the g_pictogramList array
@@ -294,75 +251,12 @@ var refreshPictogramViews = function(){
 		waitForImagesToLoad(function(){
 			for (var i = 0; i < g_pictogramList.length; i++){
 //				setupPictogramViewNonCanvas(g_pictogramList[i]);
-				setupPictogramViewOnCanvas(g_pictogramList[i], null, true);			
+				setupPictogramViewOnCanvas(g_pictogramList[i]);			
 			}
 		});		
 	} else{
 //		Utils.addClass(GlobalElements.sharePictogramsButton, "hide");
 	}
-};
-
-var getMousePositionInCanvas = function(canvas, evt) {
-    var rect = canvas.getBoundingClientRect();
-    return {
-    	x: evt.clientX - rect.left,
-      	y: evt.clientY - rect.top
-    };
-};
-
-
-var refreshCanvasScreen = function(){
-	var canvasContainer = document.getElementById("charts-container");
-	var context = canvasContainer.getContext("2d");
-	
-	updateCanvasDimensions(canvasContainer, g_pictogramList, true);
-	context.clearRect(0, 0, canvasContainer.width, canvasContainer.height);
-	
-	for (var i=0; i<g_pictogramList.length;i++){
-		drawPictogramImageDataOnCanvas(context, g_pictogramList[i].pictogramImageData);
-	}
-};
-
-//sets up mouse interactions for the canvas (mousedown, mouseup etc)
-var setupCanvasMouseInteractions = function(canvasContainer){
-	
-	if (!canvasContainer){
-		canvasContainer = document.getElementById("charts-container"); //take charts container to be default canvas		
-	}
-	
-	canvasContainer.removeEventListener("mousemove");
-	canvasContainer.addEventListener("mousemove", function(e){
-		refreshCanvasScreen();
-		var c_mousePositionInCanvas = getMousePositionInCanvas(canvasContainer, e);
-		var pictogramHoveredUpon = isMouseOverAPictogram(c_mousePositionInCanvas);
-		if (pictogramHoveredUpon){
-			highlightPictogram(pictogramHoveredUpon, canvasContainer);
-		}
-	});
-};
-
-var highlightPictogram = function(pictogram, canvas){
-     var context = canvas.getContext('2d');
-     context.beginPath();
-     context.rect(pictogram.pictogramImageData.imageX, pictogram.pictogramImageData.imageY, 
-    		 (pictogram.pictogramImageData.imageX + pictogram.pictogramImageData.imageWidth), (pictogram.pictogramImageData.imageY + pictogram.pictogramImageData.imageHeight - 30));
-     context.lineWidth = 1;
-     context.strokeStyle = '#dedede';
-     context.stroke();
-};
-
-var isMouseOverAPictogram = function(currentMousePosition){
-	var pictogramHoveredUpon = null;
-	for (var i =0 ; i<g_pictogramList.length;i++){
-		var c_pictogramImage = g_pictogramList[i].pictogramImageData;
-		if ( (currentMousePosition.x > c_pictogramImage.imageX) && (currentMousePosition.x < (c_pictogramImage.imageX + c_pictogramImage.imageWidth)) && 
-				(currentMousePosition.y > c_pictogramImage.imageY) && (currentMousePosition.y < (c_pictogramImage.imageY + c_pictogramImage.imageHeight)) ){
-			pictogramHoveredUpon = g_pictogramList[i];
-			break;
-		}
-	}
-	
-	return pictogramHoveredUpon;
 };
 
 //before a pictogram can be rendered on the canvas, we have to make sure that all images for it have been loaded
@@ -371,19 +265,11 @@ var waitForImagesToLoad = function(loadedCallback){
 	var allImagesLoaded = true;
 	for (var i = 0; i<g_pictogramList.length; i++){
 		var pictogramImagesLoaded = true;
-		
-		if (g_pictogramList[i].pictogramImageData && g_pictogramList[i].pictogramImageData.pictogramImageLoaded !== true){
-			pictogramImagesLoaded = false;
-			break;
-		}
-		
-		if (pictogramImagesLoaded){
-			for (var k = 0; k<g_pictogramList[i].pictogramDataRows.length; k++){
-				if (g_pictogramList[i].pictogramDataRows[k].pictogramIconImageLoaded === false){
-					pictogramImagesLoaded = false;
-					break;
-				}
-			}	
+		for (var k = 0; k<g_pictogramList[i].pictogramDataRows.length; k++){
+			if (g_pictogramList[i].pictogramDataRows[k].pictogramIconImageLoaded === false){
+				pictogramImagesLoaded = false;
+				break;
+			}
 		}
 		
 		if (!pictogramImagesLoaded){
@@ -410,26 +296,16 @@ var setupPictogramViewOnCanvas = function(c_pictogram, canvasContainer, noEvents
 	}
 	var context = canvasContainer.getContext("2d");
 	
-	/*var containerBoxDimensions = {};
-	containerBoxDimensions.x = 10;
-	containerBoxDimensions.y = g_currentLineHeight;
-	containerBoxDimensions.width = 630;
-	containerBoxDimensions.height = g_currentLineHeight;*/
-	
-	
 	g_currentLineHeight += 20; //give 20 px padding before starting new pictogram
 	context.font = 'bold 14pt Calibri';
 	context.fillStyle = "black";
 	context.fillText(c_pictogram.pictogramName, 10, g_currentLineHeight); //render the title
 	c_pictogram.pictogramLineHeight = g_currentLineHeight;
 
-	var pictogramOptionsContainer = null;
-	if (!noEvents){
-		pictogramOptionsContainer = getPictogramOptionButtons(c_pictogram); //render the option buttons, ie, Edit & Delete for the pictogram
-		pictogramOptionsContainer.className = "cc-pictogram-options-container";
-		pictogramOptionsContainer.style.top = (Number(g_currentLineHeight) - 20) + "px";
-		document.getElementById("pictogram-canvas-container").appendChild(pictogramOptionsContainer);		
-	}
+	var pictogramOptionsContainer = getPictogramOptionButtons(c_pictogram); //render the option buttons, ie, Edit & Delete for the pictogram
+	pictogramOptionsContainer.className = "cc-pictogram-options-container";
+	pictogramOptionsContainer.style.top = (Number(g_currentLineHeight) - 20) + "px";
+	document.getElementById("pictogram-canvas-container").appendChild(pictogramOptionsContainer);
 	
 	g_currentLineHeight += 40;
 	
@@ -464,13 +340,9 @@ var setupPictogramViewOnCanvas = function(c_pictogram, canvasContainer, noEvents
 	context.fillStyle = "black";
 	context.fillText("Unit Value: " + c_pictogram.iconRatio, 20, g_currentLineHeight);
 	
-//	containerBoxDimensions.height = (Number(g_currentLineHeight) + 10) - Number(g_currentLineHeight);
-	//draw container box
-	
-	
 	g_currentLineHeight += 30;
 	
-	if (!noEvents && pictogramOptionsContainer){
+	if (!noEvents){
 		setEventsForPictogramView(pictogramOptionsContainer);		
 	}
 };
@@ -602,7 +474,7 @@ var addPictogramDataRow = function(pictogramRowDataToPopulate){
 	//html for the new data row
 	var newPictogramDataRowHTML = "<td>Data Name: <input type='text' maxlength='20' class='common-text-input pictogram-data-name'></input></td>";
 	newPictogramDataRowHTML += "<td>Data Value: <input type='text' class='common-text-input width20 pictogram-data-value' maxlength='2'></input></td>";
-	newPictogramDataRowHTML += "<td>Data Icon: <select class='pictogram-data-icon-select'><option value='circle'>Circle</option><option value='square'>Square</option></select></td>";// Removed <option value='icon'>Custom Icon</option> option for building mouse interactions :)
+	newPictogramDataRowHTML += "<td>Data Icon: <select class='pictogram-data-icon-select'><option value='circle'>Circle</option><option value='square'>Square</option><option value='icon'>Custom Icon</option></select></td>";
 	newPictogramDataRowHTML += "<td class='hide pictogram-data-icon-url-cell'>Icon URL: <input type='text' maxlength='1000' value='"+GlobalElements.defaultPictogramIconUrl+"' class='common-text-input pictogram-data-icon-url'></input></td>";
 	newPictogramDataRowHTML += "<td class='pictogram-data-icon-color-cell'>Color: #<input type='text' maxlength='6' class='common-text-input pictogram-data-icon-color'></input></td>";
 	newPictogramDataRowHTML += "<td class='pictogram-data-delete-cell'><div class='menu-button pictogram-data-delete red-btn'>Delete</td>";
