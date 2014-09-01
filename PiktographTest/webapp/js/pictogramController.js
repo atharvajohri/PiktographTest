@@ -401,10 +401,6 @@ var refreshCanvasScreen = function(){
 	for (var i=0;i<selectedPictogramOptions.length;i++){
 		Utils[(isAPictogramSelected > -1) ? "removeClass" : "addClass"](selectedPictogramOptions[i], "hide");
 	}
-	
-	if(g_initMouseStatus.stored ){
-		console.log("distance moved: " + g_initMouseStatus.stored + ", " + g_initMouseStatus.distanceX + ", " + g_initMouseStatus.distanceY);
-	}
 };
 
 //sets up mouse interactions for the canvas (mousedown, mouseup etc)
