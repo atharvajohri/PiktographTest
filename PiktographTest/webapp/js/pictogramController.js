@@ -4,6 +4,9 @@
 var g_pictogramList = []; //an array to store all the pictograms created
 var g_currentLineHeight = 26; //this is the starting height for drawing the pictogram on the canvas (think of it as offset for Y axis)
 var g_mouseStatus = {}; //this is an object containing the status of the mouse (whether it's clicked, or dragging, etc)
+var g_canvasInterval = null;
+var g_mouseResizeBuffer = 20;
+var g_canvasRefreshRate = 5; //5 ms
 
 var MAX_ICON_COUNT = 10; //max icon count is the number of icons to represent the max value for a data row of a pictogram
 
@@ -21,6 +24,25 @@ var setupPictogram = function(){ //initiator function
 var setupPictogramEvents = function(){
 	document.getElementById("add-pictogram-btn").addEventListener("click", function(){ //dom event to capture click on create pictogram button
 		openCreatePictogramPopup("Create New Pictogram");
+	});
+	
+	document.getElementById("edit-pictogram-btn").addEventListener("click", function(){ //dom event to capture click on create pictogram button
+		for (var i=0;i<g_pictogramList.length;i++){
+			if (g_pictogramList[i].pictogramStatus.selected === true){
+				var pictogramIndexToEdit = findPictogramIndexById(g_pictogramList[i].pictogramId);
+				openCreatePictogramPopup("Edit Pictogram", pictogramIndexToEdit);	
+				break;
+			}
+		}
+	});
+	
+	document.getElementById("delete-pictogram-btn").addEventListener("click", function(){ //dom event to capture click on create pictogram button
+		for (var i=0;i<g_pictogramList.length;i++){
+			if (g_pictogramList[i].pictogramStatus.selected === true){
+				var pictogramIndexToDelete = findPictogramIndexById(g_pictogramList[i].pictogramId);
+				g_pictogramList.splice(pictogramIndexToDelete, 1);
+			}
+		}
 	});
 	
 	/*document.getElementById("cors-okay-btn").addEventListener("click", function(){
@@ -91,8 +113,10 @@ var setupPictogramDataEvents = function(){
 			var existingPictogramIndex = findPictogramIndexById(currentPictogramModel.pictogramId);
 			if (typeof existingPictogramIndex === "number"){
 				g_pictogramList[existingPictogramIndex] = currentPictogramModel;
+				currentPictogramModel.pictogramIndex = existingPictogramIndex;
 			}else{
 				g_pictogramList.push(currentPictogramModel);			
+				currentPictogramModel.pictogramIndex = (g_pictogramList.length - 1);
 			}
 			
 //			refreshPictogramViews();
@@ -132,9 +156,24 @@ var convertPictogramDataToImage = function(pictogramModel){
 			Utils.showOverlay();
 			Utils.removeClass(GlobalElements.chartDimensionsPopup, "hide");
 			
-			updateCanvasDimensions(GlobalElements.tempPictogramContainer, [pictogramModel]);
-			setupPictogramViewOnCanvas(pictogramModel, GlobalElements.tempPictogramContainer, true);
+			var tempContext = document.getElementById("temp-pictogram-canvas").getContext("2d");
+			tempContext.clearRect(0, 0, GlobalElements.tempPictogramContainer.width, GlobalElements.tempPictogramContainer.height);
 			
+			GlobalElements.tempPictogramContainer.setAttribute("height", 10);
+			
+			updateCanvasDimensions(GlobalElements.tempPictogramContainer, [pictogramModel]);
+			
+			// Fill the background and border the pictogram
+			tempContext.fillStyle = "rgba(240, 240, 240, 1)";
+			tempContext.fillRect(0, 0, 600, GlobalElements.tempPictogramContainer.height);
+			tempContext.beginPath();
+			tempContext.rect(0, 0, 600, GlobalElements.tempPictogramContainer.height);
+		    tempContext.lineWidth = 2;
+		    tempContext.strokeStyle = 'rgba(180, 180, 180, 1)';
+		    tempContext.stroke();
+		    
+			setupPictogramViewOnCanvas(pictogramModel, GlobalElements.tempPictogramContainer, true);
+
 			//add pictogram image data to be drawn on final canvas that can be resized and repositioned 
 			pictogramModel.pictogramImageData = new PictogramImageData(GlobalElements.tempPictogramContainer.toDataURL(), 600, GlobalElements.tempPictogramContainer.height, 40);
 			
@@ -150,10 +189,17 @@ var convertPictogramDataToImage = function(pictogramModel){
 //draws Pictograms using image data generated from the temporary canvas
 var drawPictogramsUsingImageData = function(pictogramList){
 	waitForImagesToLoad(function(){
-		refreshCanvasScreen();
+		setupCanvasRefresh();
 		setupCanvasMouseInteractions();
 	});
 };
+
+function setupCanvasRefresh(){
+	if (g_canvasInterval){
+		clearInterval(g_canvasInterval);
+	}
+	g_canvasInterval = setInterval(refreshCanvasScreen, g_canvasRefreshRate);
+}
 
 var drawPictogramImageDataOnCanvas = function(canvasContext, pictogramImageData){
 	canvasContext.drawImage(pictogramImageData.pictogramImage, pictogramImageData.imageX, pictogramImageData.imageY, pictogramImageData.imageWidth, pictogramImageData.imageHeight); // Or at whatever offset you like
@@ -242,7 +288,7 @@ var updateCanvasDimensions = function(pictogramContainer, pictogramList, usingIm
 	}
 	
 	var totalHeight = 0;
-	g_currentLineHeight = 26;
+	g_currentLineHeight = 16;
 	if (!usingImageData){
 		for (var i = 0; i < pictogramList.length; i++){
 			totalHeight += (80 + pictogramList[i].pictogramDataRows.length * 45);
@@ -317,9 +363,47 @@ var refreshCanvasScreen = function(){
 	
 	updateCanvasDimensions(canvasContainer, g_pictogramList, true);
 	context.clearRect(0, 0, canvasContainer.width, canvasContainer.height);
+
+	var isAPictogramSelected = -1;
+	
+	if (g_pictogramList.length > 0){
+		for (var i=0; i<g_pictogramList.length;i++){
+			if (g_pictogramList[i].pictogramStatus.selected === true){
+				isAPictogramSelected = i;
+			}
+		}
+		
+		if (isAPictogramSelected > -1){
+			
+			var tempIndex = g_pictogramList[g_pictogramList.length - 1].pictogramIndex;
+			g_pictogramList[g_pictogramList.length - 1].pictogramIndex = g_pictogramList[isAPictogramSelected].pictogramIndex;
+			g_pictogramList[isAPictogramSelected].pictogramIndex = tempIndex;
+			
+			var tempPictogram = g_pictogramList[g_pictogramList.length - 1];
+			g_pictogramList[g_pictogramList.length - 1] = g_pictogramList[isAPictogramSelected];
+			g_pictogramList[isAPictogramSelected] = tempPictogram;
+		}
+	}
 	
 	for (var i=0; i<g_pictogramList.length;i++){
 		drawPictogramImageDataOnCanvas(context, g_pictogramList[i].pictogramImageData);
+		if (g_pictogramList[i].pictogramStatus.highlighted){
+			highlightPictogram(g_pictogramList[i], canvasContainer);
+		}
+		if (g_pictogramList[i].pictogramStatus.selected){
+			selectPictogram(g_pictogramList[i], canvasContainer);
+		}
+		
+	}
+	
+	
+	var selectedPictogramOptions = document.querySelectorAll(".selected-pictogram-option");
+	for (var i=0;i<selectedPictogramOptions.length;i++){
+		Utils[(isAPictogramSelected > -1) ? "removeClass" : "addClass"](selectedPictogramOptions[i], "hide");
+	}
+	
+	if(g_initMouseStatus.stored ){
+		console.log("distance moved: " + g_initMouseStatus.stored + ", " + g_initMouseStatus.distanceX + ", " + g_initMouseStatus.distanceY);
 	}
 };
 
@@ -330,39 +414,247 @@ var setupCanvasMouseInteractions = function(canvasContainer){
 		canvasContainer = document.getElementById("charts-container"); //take charts container to be default canvas		
 	}
 	
-	canvasContainer.removeEventListener("mousemove");
-	canvasContainer.addEventListener("mousemove", function(e){
-		refreshCanvasScreen();
-		var c_mousePositionInCanvas = getMousePositionInCanvas(canvasContainer, e);
-		var pictogramHoveredUpon = isMouseOverAPictogram(c_mousePositionInCanvas);
-		if (pictogramHoveredUpon){
-			highlightPictogram(pictogramHoveredUpon, canvasContainer);
-		}
-	});
+	canvasContainer.removeEventListener("mousemove", mouseMoveEventListening);
+	canvasContainer.addEventListener("mousemove", mouseMoveEventListening);
+	
+	canvasContainer.removeEventListener("mousedown", mouseDownEventListening);
+	canvasContainer.addEventListener("mousedown", mouseDownEventListening);
+	
+	document.removeEventListener("mouseup", mouseUpEventListening);
+	document.addEventListener("mouseup", mouseUpEventListening);
+};
+
+var selectPictogram = function(pictogram, canvas){
+    var context = canvas.getContext('2d');
+    context.beginPath();
+    surroundPictogramWithRectangle(context, pictogram);
+    context.lineWidth = 1;
+    context.strokeStyle = '#aeaeae';
+    context.stroke();
+    
+    context.beginPath();
+    context.arc(pictogram.pictogramImageData.imageX, pictogram.pictogramImageData.imageY, 5, 0, 2 * Math.PI, false);
+    context.fillStyle = '#aeaeae';
+    context.fill();
+    
+    context.beginPath();
+    context.arc(pictogram.pictogramImageData.imageX + pictogram.pictogramImageData.imageWidth, pictogram.pictogramImageData.imageY, 5, 0, 2 * Math.PI, false);
+    context.fillStyle = '#aeaeae';
+    context.fill();
+    
+    context.beginPath();
+    context.arc(pictogram.pictogramImageData.imageX + pictogram.pictogramImageData.imageWidth, pictogram.pictogramImageData.imageY + pictogram.pictogramImageData.imageHeight, 5, 0, 2 * Math.PI, false);
+    context.fillStyle = '#aeaeae';
+    context.fill();
+    
+    context.beginPath();
+    context.arc(pictogram.pictogramImageData.imageX, pictogram.pictogramImageData.imageY + pictogram.pictogramImageData.imageHeight, 5, 0, 2 * Math.PI, false);
+    context.fillStyle = '#aeaeae';
+    context.fill();
 };
 
 var highlightPictogram = function(pictogram, canvas){
-     var context = canvas.getContext('2d');
-     context.beginPath();
-     context.rect(pictogram.pictogramImageData.imageX, pictogram.pictogramImageData.imageY, 
-    		 (pictogram.pictogramImageData.imageX + pictogram.pictogramImageData.imageWidth), (pictogram.pictogramImageData.imageY + pictogram.pictogramImageData.imageHeight - 30));
-     context.lineWidth = 1;
-     context.strokeStyle = '#dedede';
-     context.stroke();
+    var context = canvas.getContext('2d');
+    context.beginPath();
+    surroundPictogramWithRectangle(context, pictogram);
+    context.lineWidth = 1;
+    context.strokeStyle = '#dedede';
+    context.stroke();
+};
+
+var surroundPictogramWithRectangle = function(context, pictogram){
+	context.rect(pictogram.pictogramImageData.imageX, pictogram.pictogramImageData.imageY, 
+   		 (pictogram.pictogramImageData.imageWidth), (pictogram.pictogramImageData.imageHeight));
+};
+
+var g_initMouseStatus = {
+	stored: false,
+	mouseX: null,
+	mouseY: null,
+	distanceX: null,
+	distanceY: null,
+	resize: false,
+	resizing: false
+};
+
+var mouseDownEventListening = function(e){
+	var canvasContainer = document.getElementById("charts-container");
+	var c_mousePositionInCanvas = getMousePositionInCanvas(canvasContainer, e);
+	
+	if (!g_initMouseStatus.stored){
+		g_initMouseStatus.stored = true;
+		g_initMouseStatus.mouseX = c_mousePositionInCanvas.x;
+		g_initMouseStatus.mouseY = c_mousePositionInCanvas.y;
+	}
+	var pictogramClickedUpon = isMouseOverAPictogram(c_mousePositionInCanvas);
+	/*if (pictogramHoveredUpon){
+		selectPictogram(pictogramHoveredUpon, canvasContainer);
+	}*/
+	for (var i=0;i<g_pictogramList.length;i++){
+		g_pictogramList[i].pictogramStatus.selected = false;
+	}
+	if (pictogramClickedUpon){
+		pictogramClickedUpon.pictogramStatus.selected = true;		
+	}
+};
+
+var mouseUpEventListening = function(e){
+	g_initMouseStatus.stored = false;
+	g_initMouseStatus.mouseX = null;
+	g_initMouseStatus.mouseY = null;
+	g_initMouseStatus.distanceX = null;
+	g_initMouseStatus.distanceY = null;
+	g_initMouseStatus.resize = null;
+	g_initMouseStatus.resizing = false;
+};
+
+var mouseMoveEventListening = function(e){
+	
+	var canvasContainer = document.getElementById("charts-container");
+	var c_mousePositionInCanvas = getMousePositionInCanvas(canvasContainer, e);
+	
+	g_initMouseStatus.distanceX = (c_mousePositionInCanvas.x - g_initMouseStatus.mouseX);
+	g_initMouseStatus.distanceY = (c_mousePositionInCanvas.y - g_initMouseStatus.mouseY);
+	
+	var pictogramHoveredUpon = isMouseOverAPictogram(c_mousePositionInCanvas);
+	var selectedPictogram = null;
+	for (var i=0;i<g_pictogramList.length;i++){
+		g_pictogramList[i].pictogramStatus.highlighted = false;
+		if (g_pictogramList[i].pictogramStatus.selected){
+			selectedPictogram = g_pictogramList[i];
+		}
+	}
+	
+	if (!g_initMouseStatus.resizing){
+		g_initMouseStatus.resize = null;
+	}
+	
+	if (pictogramHoveredUpon){
+		pictogramHoveredUpon.pictogramStatus.highlighted = true;
+		
+		var pictogramImageData = pictogramHoveredUpon.pictogramImageData;
+		if ( c_mousePositionInCanvas.x > (Number(pictogramImageData.imageX) - g_mouseResizeBuffer)
+				&& (c_mousePositionInCanvas.x < Number(pictogramImageData.imageX) + g_mouseResizeBuffer) 
+					&& (c_mousePositionInCanvas.y > (Number(pictogramImageData.imageY) + Number(pictogramImageData.imageHeight)) - g_mouseResizeBuffer)
+						&& c_mousePositionInCanvas.y < (Number(pictogramImageData.imageY) + Number(pictogramImageData.imageHeight) + g_mouseResizeBuffer) ){
+			g_initMouseStatus.resize = "sw";
+		}else if( c_mousePositionInCanvas.x > Number(pictogramImageData.imageX - g_mouseResizeBuffer) 
+			&& (c_mousePositionInCanvas.x < Number(pictogramImageData.imageX) + g_mouseResizeBuffer) 
+				&& c_mousePositionInCanvas.y > Number(pictogramImageData.imageY - g_mouseResizeBuffer)
+					&& c_mousePositionInCanvas.y < Number(pictogramImageData.imageY) + g_mouseResizeBuffer ){
+			g_initMouseStatus.resize = "nw";
+		}else if( c_mousePositionInCanvas.x > (Number(pictogramImageData.imageX) + Number(pictogramImageData.imageWidth) - g_mouseResizeBuffer) 
+			&& (c_mousePositionInCanvas.x < Number(pictogramImageData.imageX) + Number(pictogramImageData.imageWidth) + g_mouseResizeBuffer) 
+				&& c_mousePositionInCanvas.y > Number(pictogramImageData.imageY - g_mouseResizeBuffer)
+					&& c_mousePositionInCanvas.y < Number(pictogramImageData.imageY) + g_mouseResizeBuffer ){
+			g_initMouseStatus.resize = "ne";
+		}else if( c_mousePositionInCanvas.x > (Number(pictogramImageData.imageX) + Number(pictogramImageData.imageWidth) - g_mouseResizeBuffer) 
+			&& (c_mousePositionInCanvas.x < Number(pictogramImageData.imageX) + Number(pictogramImageData.imageWidth) + g_mouseResizeBuffer) 
+				&& (c_mousePositionInCanvas.y > (Number(pictogramImageData.imageY) + Number(pictogramImageData.imageHeight)) - g_mouseResizeBuffer)
+					&& c_mousePositionInCanvas.y < (Number(pictogramImageData.imageY) + Number(pictogramImageData.imageHeight) + g_mouseResizeBuffer) ){
+			g_initMouseStatus.resize = "se";
+		}
+		
+		if (g_initMouseStatus.resize){
+			if (g_initMouseStatus.stored){
+				g_initMouseStatus.resizing = true;	
+			}
+			
+			canvasContainer.style.cursor = g_initMouseStatus.resize + "-resize";		
+		}else{
+			canvasContainer.style.cursor = "crosshair";
+			g_initMouseStatus.resize = false;
+		}
+		
+	}else{
+		canvasContainer.style.cursor = "default";
+	}
+	
+	if (selectedPictogram && g_initMouseStatus.stored){
+		if (g_initMouseStatus.resize){
+
+			var newWidth = selectedPictogram.pictogramImageData.imageWidth;
+			var newHeight = selectedPictogram.pictogramImageData.imageHeight;
+			
+			if (g_initMouseStatus.resize === "ne"){
+				if (Number(g_initMouseStatus.distanceY) < 0){
+					selectedPictogram.pictogramImageData.imageY -= Math.abs(g_initMouseStatus.distanceY);
+					newHeight = selectedPictogram.pictogramImageData.imageHeight + Math.abs(g_initMouseStatus.distanceY);
+				}else{
+					selectedPictogram.pictogramImageData.imageY += Math.abs(g_initMouseStatus.distanceY);
+					newHeight = selectedPictogram.pictogramImageData.imageHeight - Math.abs(g_initMouseStatus.distanceY);
+				}
+				
+				newWidth = selectedPictogram.pictogramImageData.imageWidth + g_initMouseStatus.distanceX;
+			}else if (g_initMouseStatus.resize === "nw"){
+				if (Number(g_initMouseStatus.distanceY) < 0){
+					selectedPictogram.pictogramImageData.imageY -= Math.abs(g_initMouseStatus.distanceY);
+					newHeight = selectedPictogram.pictogramImageData.imageHeight + Math.abs(g_initMouseStatus.distanceY);
+				}else{
+					selectedPictogram.pictogramImageData.imageY += Math.abs(g_initMouseStatus.distanceY);
+					newHeight = selectedPictogram.pictogramImageData.imageHeight - Math.abs(g_initMouseStatus.distanceY);
+				}
+				
+				if (Number(g_initMouseStatus.distanceX) < 0){
+					selectedPictogram.pictogramImageData.imageX -= Math.abs(g_initMouseStatus.distanceX);
+					newWidth = selectedPictogram.pictogramImageData.imageWidth + Math.abs(g_initMouseStatus.distanceX);
+				}else{
+					selectedPictogram.pictogramImageData.imageX += Math.abs(g_initMouseStatus.distanceX);
+					newWidth = selectedPictogram.pictogramImageData.imageWidth - Math.abs(g_initMouseStatus.distanceX);
+				}
+			} else if (g_initMouseStatus.resize === "se"){
+				
+				newHeight = selectedPictogram.pictogramImageData.imageHeight + g_initMouseStatus.distanceY;
+				newWidth = selectedPictogram.pictogramImageData.imageWidth + g_initMouseStatus.distanceX;
+				
+			} else if (g_initMouseStatus.resize === "sw"){
+				
+				newHeight = selectedPictogram.pictogramImageData.imageHeight + g_initMouseStatus.distanceY;
+				if (Number(g_initMouseStatus.distanceX) < 0){
+					selectedPictogram.pictogramImageData.imageX -= Math.abs(g_initMouseStatus.distanceX);
+					newWidth = selectedPictogram.pictogramImageData.imageWidth + Math.abs(g_initMouseStatus.distanceX);
+				}else{
+					selectedPictogram.pictogramImageData.imageX += Math.abs(g_initMouseStatus.distanceX);
+					newWidth = selectedPictogram.pictogramImageData.imageWidth - Math.abs(g_initMouseStatus.distanceX);
+				}
+			}
+			
+			if (newWidth > 2*g_mouseResizeBuffer && newHeight > 2*g_mouseResizeBuffer){
+				selectedPictogram.pictogramImageData.imageWidth = newWidth;
+				selectedPictogram.pictogramImageData.imageHeight = newHeight;
+			}
+			
+		}else if(!g_initMouseStatus.resizing){
+			selectedPictogram.pictogramImageData.imageX += g_initMouseStatus.distanceX;
+			selectedPictogram.pictogramImageData.imageY += g_initMouseStatus.distanceY;	
+		}
+		
+		g_initMouseStatus.mouseX = c_mousePositionInCanvas.x;
+		g_initMouseStatus.mouseY = c_mousePositionInCanvas.y;
+	}
 };
 
 var isMouseOverAPictogram = function(currentMousePosition){
-	var pictogramHoveredUpon = null;
+	var possiblePictograms = [];
 	for (var i =0 ; i<g_pictogramList.length;i++){
 		var c_pictogramImage = g_pictogramList[i].pictogramImageData;
 		if ( (currentMousePosition.x > c_pictogramImage.imageX) && (currentMousePosition.x < (c_pictogramImage.imageX + c_pictogramImage.imageWidth)) && 
 				(currentMousePosition.y > c_pictogramImage.imageY) && (currentMousePosition.y < (c_pictogramImage.imageY + c_pictogramImage.imageHeight)) ){
-			pictogramHoveredUpon = g_pictogramList[i];
-			break;
+			possiblePictograms.push(g_pictogramList[i]);
 		}
 	}
 	
-	return pictogramHoveredUpon;
+	var pictogramWithMaxIndex = possiblePictograms[0];
+
+	if (pictogramWithMaxIndex){
+		for (var i=0;i<possiblePictograms.length;i++){
+			if (possiblePictograms[i].pictogramIndex > pictogramWithMaxIndex.pictogramIndex){
+				pictogramWithMaxIndex = possiblePictograms[i];
+			}
+		}		
+	}
+	
+	return pictogramWithMaxIndex || null;
 };
 
 //before a pictogram can be rendered on the canvas, we have to make sure that all images for it have been loaded
@@ -410,13 +702,6 @@ var setupPictogramViewOnCanvas = function(c_pictogram, canvasContainer, noEvents
 	}
 	var context = canvasContainer.getContext("2d");
 	
-	/*var containerBoxDimensions = {};
-	containerBoxDimensions.x = 10;
-	containerBoxDimensions.y = g_currentLineHeight;
-	containerBoxDimensions.width = 630;
-	containerBoxDimensions.height = g_currentLineHeight;*/
-	
-	
 	g_currentLineHeight += 20; //give 20 px padding before starting new pictogram
 	context.font = 'bold 14pt Calibri';
 	context.fillStyle = "black";
@@ -463,10 +748,6 @@ var setupPictogramViewOnCanvas = function(c_pictogram, canvasContainer, noEvents
 	context.font = '12pt Calibri'; //render the unit value text
 	context.fillStyle = "black";
 	context.fillText("Unit Value: " + c_pictogram.iconRatio, 20, g_currentLineHeight);
-	
-//	containerBoxDimensions.height = (Number(g_currentLineHeight) + 10) - Number(g_currentLineHeight);
-	//draw container box
-	
 	
 	g_currentLineHeight += 30;
 	
@@ -603,7 +884,7 @@ var addPictogramDataRow = function(pictogramRowDataToPopulate){
 	var newPictogramDataRowHTML = "<td>Data Name: <input type='text' maxlength='20' class='common-text-input pictogram-data-name'></input></td>";
 	newPictogramDataRowHTML += "<td>Data Value: <input type='text' class='common-text-input width20 pictogram-data-value' maxlength='2'></input></td>";
 	newPictogramDataRowHTML += "<td>Data Icon: <select class='pictogram-data-icon-select'><option value='circle'>Circle</option><option value='square'>Square</option></select></td>";// Removed <option value='icon'>Custom Icon</option> option for building mouse interactions :)
-	newPictogramDataRowHTML += "<td class='hide pictogram-data-icon-url-cell'>Icon URL: <input type='text' maxlength='1000' value='"+GlobalElements.defaultPictogramIconUrl+"' class='common-text-input pictogram-data-icon-url'></input></td>";
+	newPictogramDataRowHTML += "<td class='pictogram-data-icon-url-cell importantHide'>Icon URL: <input type='text' maxlength='1000' value='"+GlobalElements.defaultPictogramIconUrl+"' class='common-text-input pictogram-data-icon-url'></input></td>";
 	newPictogramDataRowHTML += "<td class='pictogram-data-icon-color-cell'>Color: #<input type='text' maxlength='6' class='common-text-input pictogram-data-icon-color'></input></td>";
 	newPictogramDataRowHTML += "<td class='pictogram-data-delete-cell'><div class='menu-button pictogram-data-delete red-btn'>Delete</td>";
 	

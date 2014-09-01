@@ -12,6 +12,11 @@ var PictogramModel = function(){
 	self.iconRatio = 0; //this holds each unit value of the icon in the pictogram
 	
 	self.pictogramImageData; //this stores the pictogram image data  such as the data url, positions and dimensions for the pictogram rendered via the temporary canvas
+	self.pictogramIndex;
+	self.pictogramStatus = {
+		selected: false,
+		highlighted: false
+	};
 };
 
 //each data row stored in PictogramModel.pictogramDataRows
@@ -36,7 +41,7 @@ var PictogramDataRow = function(name, value, iconType, iconColor, iconURL, eleme
 	
 };
 
-var PictogramImageData = function(imageDataURL, imageWidth, imageHeight, imageX, imageY){
+var PictogramImageData = function(imageDataURL, imageWidth, imageHeight, imageX, imageY, zIndex){
 	var self = this;
 	
 	self.pictogramImageLoaded = false;
